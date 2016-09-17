@@ -6,7 +6,7 @@ import random
 
 class Pivona:
     def __init__(self):
-        vona = pyvona.create_voice('auth', 'authsecret')
+        vona = pyvona.create_voice('accessKey', 'accessSecret')
         choices = [True, False]
         if random.choice(choices):
             voices = ['Nicole', 'Gwyneth', 'Salli', 'Emma']
