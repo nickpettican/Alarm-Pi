@@ -25,27 +25,27 @@ A basic Python based smart alarm clock for the Raspberry Pi.
 * **Time**
 * **JSON** - to sort the weather data from Yahoo! Weather
 
-```sudo pip install <package>``` should work just fine
+`sudo pip install <package>` should work just fine
 
-To downgrade to Requests 2.10.0 use ```sudo pip install requests==2.10.0```
+To downgrade to Requests 2.10.0 use `sudo pip install requests==2.10.0`
 
 ## Yahoo Weather
 
-Tu use the weather forecast function you need a [**Yahoo Weather WOEID** code]('http://woeid.rosselliot.co.nz/'). 
+Tu use the weather forecast function you need a [**Yahoo Weather WOEID** code](http://woeid.rosselliot.co.nz/). 
 
-This can be obtained from [here]('http://woeid.rosselliot.co.nz/').
+This can be obtained from [here](http://woeid.rosselliot.co.nz/).
 
 ## Ivona (Pyvona)
 
 In order to use the Ivona voice you need to sign up for a free beta test account at Amazon: 
 
-> [https://www.ivona.com/us/account/speechcloud/creation/]('https://www.ivona.com/us/account/speechcloud/creation/')
+> [https://www.ivona.com/us/account/speechcloud/creation/](https://www.ivona.com/us/account/speechcloud/creation/)
 
-After signing up you should get an AuthKey and AuthSecret which you insert in the credentials in ```run.py```.
+After signing up you should get an AuthKey and AuthSecret which you insert in the credentials in _run.py_.
 
 ## How to set up
 
-To enter your credentials and personal options open ```run.py```. You will see the following:
+To enter your credentials and personal options open _run.py_. You will see the following:
 
 ```
 Alarmpi(owner = 'your name/nickname',               # name by which it will greet you
@@ -70,9 +70,11 @@ Note that you can also insert a custom Ivona voice name (e.g. 'Nicole'). However
 
 ## How to schedule
 
-To schedule the script in your RPi I recommend using ```crontab```:
+To schedule the script in your RPi I recommend using `crontab`:
 
-```crontab -e * * * * * /home/pi/AlarmPi/run.py```
+`crontab -e * * * * * /home/pi/AlarmPi/run.py`
+
+Breakdown explanation:
 
 ```
 #        * * * * *  command to execute
@@ -87,13 +89,13 @@ To schedule the script in your RPi I recommend using ```crontab```:
 #        └───────────────────────── min (0 - 59)
 ```
 
-Make sure you set ```run.py``` as the file to run the AlarmPi
+Make sure you set _run.py_ as the file to run the AlarmPi
 
 ## Audio output
 
 Just to bear in mind.
 
-AlarmPi 0.0.3 comes with its own audio output command files in order to reduce background noise when the alarm is off. As it starts, it switches the audio output to AUDIO_JACK and as it finishes it switches back to HDMI. In order to change this go to the bottom of ```run.py``` and disable or change as you wish.
+AlarmPi 0.0.3 comes with its own audio output command files in order to reduce background noise when the alarm is off. As it starts, it switches the audio output to AUDIO_JACK and as it finishes it switches back to HDMI. In order to change this go to the bottom of _run.py_ and disable or change as you wish.
 
 The reason I did this is because the RPi has background noise when connected to the AUDIOJACK i.e. to speakers, so by only using them as output during the alarm you avoid this.
 
