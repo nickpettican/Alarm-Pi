@@ -65,7 +65,7 @@ def main():
                       science_news = True)
 
     
-    if tune:
+    if alarmpi.tune:
         alarmpi.alarm_sound()
     time.sleep(4*random.random())
     alarmpi.main()

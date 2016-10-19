@@ -25,10 +25,11 @@ from weather_today import Weather_today
 from news import Gnews
 
 class Alarmpi:
-    def __init__(self, owner, voice_female, voice_male, auth,
+    def __init__(self, owner, tune, voice_female, voice_male, auth,
                  auth_secret, WOEID, weather, news, world_news,
                  uk_news, health_news, tech_news, science_news):
         self.owner = owner
+        self.tune = tune
         self.pick_voice(voice_female, voice_male)
         self.auth = auth
         self.auth_secret = auth_secret
