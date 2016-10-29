@@ -61,8 +61,7 @@ class Gnews:
     def news_titles(self, response):
         news = BeautifulSoup(response.content, 'html5lib')
         news_titles_raw = news.find_all('title')
-        news_titles = [news.text for news in news_titles_raw
-                       if 'Google' not in news.text]
+        news_titles = [news.text.encode('utf-8') for news in news_titles_raw if 'Google' not in news.text]
         return self.remove_tail(news_titles)
 
     def remove_tail(self, news_titles):
@@ -70,4 +69,4 @@ class Gnews:
         for news in news_titles:
             head, sep, tail = news.partition(' - ')
             news_titles_done.append(head)
-        return news_titles_done
+        return [line.replace('&', 'and') for line in news_titles_done]

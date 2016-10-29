@@ -1,7 +1,19 @@
-# AlarmPi 0.0.3
+# AlarmPi 0.0.4
 A basic Python based smart alarm clock for the Raspberry Pi.
 
 > Uses Python 2.7
+
+## Example run:
+
+For a quick run, first see _How to set up_ and insert your credentials in _run.py_. Once it is set, just use `python run.py` and (given all the credentials are set to 'True') the following will happen:
+
+1. Short 5 - 10 second tune plays
+2. Greets 'Good morning' and gives you a short motivational quote
+3. Tells you the date i.e. day of the week and day of the month
+4. Gives you a weather forecast: first the temperature and then the condition for today
+5. Reads the top 10 news headlines for the Worl and/or the UK
+6. Reads the top 10 Medical, Technological and Scientific news headlines (for UK)
+7. Wishes you a pleasant day
 
 ## Functionality:
 
@@ -70,9 +82,13 @@ Note that you can also insert a custom Ivona voice name (e.g. 'Nicole'). However
 
 ## How to schedule
 
-To schedule the script in your RPi I recommend using `crontab`:
+To schedule the script in your RPi I recommend using _crontab_, which can be installed on your Raspberry Pi by running `sudo apt-get crontab`.
 
-`crontab -e * * * * * /home/pi/AlarmPi/run.py`
+Once you have _crontab_ installed, run `sudo crontab -e` in order to schedule your AlarmPi. Go to the bottom of the file that comes up and insert:
+
+Option 1: `* * * * * /home/pi/AlarmPi/run.py`
+
+Option 2: `* * * * * /home/pi/AlarmPi/run_alarm.sh` 
 
 Breakdown explanation:
 
@@ -89,7 +105,11 @@ Breakdown explanation:
 #        └───────────────────────── min (0 - 59)
 ```
 
-Make sure you set _run.py_ as the file to run the AlarmPi
+For example: `00 7 * * 1-5 AlarmPi/run_alarm.sh` will run it every weekday at 7am, and `00 9 * * 6-7 AlarmPi/run_alarm.sh` will run it in the weekend at 9am.
+
+With Option 1 AlarmPi will simply run, however with Option 2 (the one I use), AlarmPi will store what it says in _log.txt_. I know it goes without saying, but make sure you include the right path to the file (yours might not be in /home/pi/AlarmPi/).
+
+If you use Option 2 make sure run_alarmp.sh is executable. If not, you can easily make it by running `sudo chmod +x run_alarm.sh`. 
 
 ## Audio output
 
@@ -99,10 +119,12 @@ AlarmPi 0.0.3 comes with its own audio output command files in order to reduce b
 
 The reason I did this is because the RPi has background noise when connected to the AUDIOJACK i.e. to speakers, so by only using them as output during the alarm you avoid this.
 
+If you want to take advantage of this feature make sure the audio output files are executable. Again, this can be done by simply running `sudo chmod +x filename.sh`.
+
 ## Future development
 
 AlarmPi is still under development. My next task is to make the alarm adjustable to women users i.e. it currently greets 'sir' but no 'madam'.
 
 Additionally, it currently only reads the news headlines. So a future version may also read out a small description.
 
-Unfortunately the weather is tailored mostly to people in the UK or a country with similar weather. If your country has more extreme weather then feel free to change the way AlarmPi anounces it.
+Unfortunately the weather (and news) is tailored mostly to people in the UK or a country with similar weather. If your country has more extreme weather then feel free to contribute and make AlarmPi more worldwide.

@@ -95,9 +95,9 @@ class Weather_today:
         elif 4 <= temp < 8:
             say = list(itertools.product(
                     ["It's a bit %s at the moment. The temperature is %s with a high of %s and a low of %s." %(random.choice(['chilly', 'cold']), temp, high, low),
-                     "The temperature right now is %s degrees. It's cold, but it will reach a high of %s later" %(temp, high)],
-                    ["Wear something warm. OK?", "As mum says. wear something warm.", "Don't go catching a cold now."],
-                    ["Have a nice and warm beverage. God, I wish I could drink...", "Take care of yourself.",
+                     "The temperature right now is %s degrees. It's cold, but it will reach a high of %s later." %(temp, high)],
+                    ["Wear something warm.", "As mum says. Wear something warm.", "Don't go catching a cold now."],
+                    ["And have a nice and warm beverage. God, I wish I could drink...", "Take care of yourself.",
                      "Time for a nice warm beverage. Wouldn't you say?"]))
             self.temperature = ' '.join(random.choice(say))
 
@@ -158,7 +158,7 @@ class Weather_today:
                         ["I've been waiting a long time to say this. It's a snow day! I'm very happy, but I'm not programmed to sound excited. Unfortunately."])
             else:
                 self.condition = random.choice(
-                        ["The weather condition for today are going to be %s for the whole day."])
+                        ["The weather condition for today is going to be %s for the whole day." %(now)])
         else:
             if 'rain' in now.lower() or 'shower' in now.lower():
                 if 'rain' in later.lower() or 'shower' in later.lower():

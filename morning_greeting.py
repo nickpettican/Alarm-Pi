@@ -28,8 +28,8 @@ class Greeting:
 
     def good_morning(self):
         greet = list(itertools.product(
-                ['Good morning,', 'Buenos dias,', 'Rise and shine,', 'Up you get,', 'Cock-a-doodle-do! LOL,'],
-                ['%s.' %(self.owner), 'sleepy-head.', 'you.', 'boss.', 'sir.', 'master.']))
+                ['Good morning,', 'Good morning,', 'Buenos dias,', 'Rise and shine,', 'Up you get,', 'Cock-a-doodle-do!'],
+                ['%s.' %(self.owner), 'sleepy-head.', 'creater.', 'boss.', 'sir.', 'master.']))
         quote = list(itertools.product(
                 ['Time for your morning quote.', 'The quote for today is.', 'Quote of the day.',
                  "Let's get up on a good mood.", "I'm feeling happy today.", 'Quote time!'],
@@ -69,9 +69,9 @@ class Greeting:
         bye = list(itertools.product(
                 ["Well. That's it for me %s." %(self.owner), "And there you go %s. Your daily dose of information." %(self.owner),
                  "I hope I didn't bore you %s." %(self.owner), "I don't know about you. But I found that very interesting."],
-                ["Have a%s day %s." %(random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), self.owner),
-                 "I hope you have a%s day %s." %(random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), self.owner),
-                 "I have a%s feeling about today." %(random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']))],
+                ["Have a%s day %s." %(random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), random.choice(['boss', 'sir', 'you sexy beast', 'smarty pants'])),
+                 "I hope you have a%s day %s." %(random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), random.choice(['boss', 'sir', 'you sexy beast', 'smarty pants'])),
+                 "I have a%s feeling about today." %(random.choice(['n amazing', ' great', ' good', ' fantastic', 'n awesome']))],
                 ['Bye now!', 'TTFN, ta-ta for now.', 'Goodbye!', 'See you later', 'Cheers!']))
         self.morning = ' '.join(random.choice(greet))
         self.quote = ' '.join(random.choice(quote))

@@ -45,35 +45,33 @@ from alarmpi import Alarmpi
 import random, time, os
 
 def main():
- 
+    
     # ENTER YOUR PERSONAL CREDENTIALS BELLOW
     
-    
-    alarmpi = Alarmpi(owner = 'Name',
-                      tune = True,
-                      voice_female = True,
-                      voice_male = False,
-                      auth = 'auth',
-                      auth_secret = 'auth-key',
-                      WOEID = 'location code',
-                      weather = True,
-                      news = True,
-                      world_news = True,
-                      uk_news = False,
-                      health_news = True,
-                      tech_news = True,
-                      science_news = True)
-
+    alarmpi = Alarmpi(  owner = '',
+                        tune = True,
+                        voice_female = True,
+                        voice_male = False,
+                        auth = '',
+                        auth_secret = '',
+                        WOEID = '',
+                        weather = True,
+                        news = True,
+                        world_news = True,
+                        uk_news = True,
+                        health_news = True,
+                        tech_news = True,
+                        science_news = True)
     
     if alarmpi.tune:
         alarmpi.alarm_sound()
-    time.sleep(4*random.random())
+    time.sleep(10)
     alarmpi.main()
 
 if __name__ == "__main__":
     # IMPORTANT NOTE: the os.system commands bellow are for Raspberry Pi only
     # if you are not using the AlarmPi on the RPi disable them with the '#'
-    os.system('audio_output/./AUDIO_JACK.sh')
+    os.system('/home/pi/alarmpi/audio_output/./AUDIO_JACK.sh')
     main()
     time.sleep(5*random.random())
-    os.system('audio_output/./HDMI_out.sh')
+    os.system('/home/pi/alarmpi/audio_output/./HDMI_out.sh')

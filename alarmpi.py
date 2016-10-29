@@ -62,7 +62,7 @@ class Alarmpi:
         sounds = ['wake_up.wav', 'bad-crew-pad.wav', 'dirtbag-pad.wav',
                   'guitarloop.wav', 'glamour-pad.wav', 'feel-it.wav']
         pygame.mixer.init()
-        pygame.mixer.music.load('sounds/' + random.choice(sounds))
+        pygame.mixer.music.load('/home/pi/alarmpi/sounds/' + random.choice(sounds))
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy() == True:
             continue
@@ -78,13 +78,13 @@ class Alarmpi:
     def weather_for_today(self, vona):
         weather = Weather_today(owner = self.owner, WOEID_code = self.WOEID)
         vona.talk(weather.temperature)
-        time.sleep(4*random.random())
+        time.sleep(6*random.random())
         vona.talk(weather.condition)
-        time.sleep(4*random.random())
+        time.sleep(6*random.random())
         vona.talk(weather.wind)
-        time.sleep(4*random.random())
+        time.sleep(6*random.random())
         vona.talk(weather.sun)
-        time.sleep(4*random.random())
+        time.sleep(6*random.random())
 
     def news_for_today(self, vona):
         gnews = Gnews()
@@ -94,8 +94,11 @@ class Alarmpi:
                 vona.talk('And now for the top 10 news stories about the world today.')
                 time.sleep(4*random.random())
                 for news in world:
-                    vona.talk(news)
-                    time.sleep(4*random.random())
+                    try:
+                        vona.talk(news)
+                        time.sleep(4*random.random())
+                    except:
+                        continue
             except:
                 vona.talk('Error, could not get world news.')
         if self.uk_news:
@@ -104,8 +107,11 @@ class Alarmpi:
                 vona.talk('Now for the top news in the UK.')
                 time.sleep(4*random.random())
                 for news in uk:
-                    vona.talk(news)
-                    time.sleep(4*random.random())
+                    try:
+                        vona.talk(news)
+                        time.sleep(4*random.random())
+                    except:
+                        continue
             except:
                 vona.talk('Error, could not get UK news.')
         if self.health_news:
@@ -121,11 +127,14 @@ class Alarmpi:
         if self.tech_news:
             try:
                 health = gnews.get_tech_news()
-                vona.talk('And now for the top tech news.')
+                vona.talk('And now for the top technological news.')
                 time.sleep(4*random.random())
                 for news in health:
-                    vona.talk(news)
-                    time.sleep(4*random.random())
+                    try:
+                        vona.talk(news)
+                        time.sleep(4*random.random())
+                    except:
+                        continue
             except:
                 vona.talk('Error, could not get tech news.')
         if self.science_news:
@@ -134,8 +143,11 @@ class Alarmpi:
                 vona.talk('And now for the top scientific news.')
                 time.sleep(4*random.random())
                 for news in health:
-                    vona.talk(news)
-                    time.sleep(4*random.random())
+                    try:
+                        vona.talk(news)
+                        time.sleep(4*random.random())
+                    except:
+                        continue
             except:
                 vona.talk('Error, could not get scientific news.')
 
