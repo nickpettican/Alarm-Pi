@@ -43,7 +43,7 @@ To downgrade to Requests 2.10.0 use `sudo pip install requests==2.10.0`
 
 ## Yahoo Weather
 
-Tu use the weather forecast function you need a [**Yahoo Weather WOEID** code](http://woeid.rosselliot.co.nz/). 
+To use the weather forecast function you need a [**Yahoo Weather WOEID** code](http://woeid.rosselliot.co.nz/). 
 
 This can be obtained from [here](http://woeid.rosselliot.co.nz/).
 
@@ -109,13 +109,13 @@ For example: `00 7 * * 1-5 AlarmPi/run_alarm.sh` will run it every weekday at 7a
 
 With Option 1 AlarmPi will simply run, however with Option 2 (the one I use), AlarmPi will store what it says in _log.txt_. I know it goes without saying, but make sure you include the right path to the file (yours might not be in /home/pi/AlarmPi/).
 
-If you use Option 2 make sure run_alarmp.sh is executable. If not, you can easily make it by running `sudo chmod +x run_alarm.sh`. 
+If you use Option 2 make sure _run_alarmp.sh_ is executable. If not, you can easily make it by running `sudo chmod +x run_alarm.sh`. 
 
 ## Audio output
 
 Just to bear in mind.
 
-AlarmPi 0.0.3 comes with its own audio output command files in order to reduce background noise when the alarm is off. As it starts, it switches the audio output to AUDIO_JACK and as it finishes it switches back to HDMI. In order to change this go to the bottom of _run.py_ and disable or change as you wish.
+AlarmPi comes with its own audio output command files in order to reduce background noise when the alarm is off. As it starts, it switches the audio output to AUDIO_JACK and as it finishes it switches back to HDMI. In order to change this go to the bottom of _run.py_ and disable or change as you wish.
 
 The reason I did this is because the RPi has background noise when connected to the AUDIOJACK i.e. to speakers, so by only using them as output during the alarm you avoid this.
 
@@ -127,4 +127,4 @@ AlarmPi is still under development. My next task is to make the alarm adjustable
 
 Additionally, it currently only reads the news headlines. So a future version may also read out a small description.
 
-Unfortunately the weather (and news) is tailored mostly to people in the UK or a country with similar weather. If your country has more extreme weather then feel free to contribute and make AlarmPi more worldwide.
+Unfortunately, the weather (and news) is tailored mostly to people in the UK or a country with similar weather. If your country has more extreme weather then feel free to contribute and make AlarmPi more worldwide.
