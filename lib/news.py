@@ -32,6 +32,7 @@ class Gnews:
         self.health_url = 'http://news.google.com/news?output=rss&ned=uk&topic=m'
         self.tech_url = 'http://news.google.com/news?output=rss&ned=uk&topic=t'
         self.science_url = 'http://news.google.com/news?output=rss&ned=uk&topic=snc'
+        self.all_news = ['to avoid repeating news']
 
     def update_header(self):
         if self.pull.headers['User-Agent']:

@@ -70,7 +70,7 @@ def main():
 
 if __name__ == "__main__":
     # IMPORTANT NOTE: the os.system commands bellow are for Raspberry Pi only
-    # if you are not using the AlarmPi on the RPi disable them with the '#'
+    # if you are not using the AlarmPi on the RPi disable them with a comment sign '#'
     os.system('/home/pi/alarmpi/audio_output/./AUDIO_JACK.sh')
     main()
     time.sleep(5*random.random())

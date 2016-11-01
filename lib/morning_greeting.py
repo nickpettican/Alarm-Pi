@@ -29,7 +29,7 @@ class Greeting:
     def good_morning(self):
         greet = list(itertools.product(
                 ['Good morning,', 'Good morning,', 'Buenos dias,', 'Rise and shine,', 'Up you get,', 'Cock-a-doodle-do!'],
-                ['%s.' %(self.owner), 'sleepy-head.', 'creater.', 'boss.', 'sir.', 'master.']))
+                ['%s.' %(self.owner), 'sleepy-head.', 'numbnuts.', 'you awesome fellow.', 'sir.', 'master.']))
         quote = list(itertools.product(
                 ['Time for your morning quote.', 'The quote for today is.', 'Quote of the day.',
                  "Let's get up on a good mood.", "I'm feeling happy today.", 'Quote time!'],

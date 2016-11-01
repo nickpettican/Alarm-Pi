@@ -19,10 +19,10 @@
 '''
 
 import time, random, os, pygame
-from vona import Pivona
-from morning_greeting import Greeting
-from weather_today import Weather_today
-from news import Gnews
+from lib.vona import Pivona
+from lib.morning_greeting import Greeting
+from lib.weather_today import Weather_today
+from lib.news import Gnews
 
 class Alarmpi:
     def __init__(self, owner, tune, voice_female, voice_male, auth,
@@ -93,12 +93,7 @@ class Alarmpi:
                 world = gnews.get_world_news()
                 vona.talk('And now for the top 10 news stories about the world today.')
                 time.sleep(4*random.random())
-                for news in world:
-                    try:
-                        vona.talk(news)
-                        time.sleep(4*random.random())
-                    except:
-                        continue
+                self.news_loop(gnews, vona, world)
             except:
                 vona.talk('Error, could not get world news.')
         if self.uk_news:
@@ -106,12 +101,7 @@ class Alarmpi:
                 uk = gnews.get_uk_news()
                 vona.talk('Now for the top news in the UK.')
                 time.sleep(4*random.random())
-                for news in uk:
-                    try:
-                        vona.talk(news)
-                        time.sleep(4*random.random())
-                    except:
-                        continue
+                self.news_loop(gnews, vona, uk)
             except:
                 vona.talk('Error, could not get UK news.')
         if self.health_news:
@@ -119,37 +109,35 @@ class Alarmpi:
                 health = gnews.get_health_news()
                 vona.talk('And now for the top medical news.')
                 time.sleep(4*random.random())
-                for news in health:
-                    vona.talk(news)
-                    time.sleep(4*random.random())
+                self.news_loop(gnews, vona, health)
             except:
                 vona.talk('Error, could not get medical news.')
         if self.tech_news:
             try:
-                health = gnews.get_tech_news()
+                tech = gnews.get_tech_news()
                 vona.talk('And now for the top technological news.')
                 time.sleep(4*random.random())
-                for news in health:
-                    try:
-                        vona.talk(news)
-                        time.sleep(4*random.random())
-                    except:
-                        continue
+                self.news_loop(gnews, vona, tech)
             except:
                 vona.talk('Error, could not get tech news.')
         if self.science_news:
             try:
-                health = gnews.get_science_news()
+                science = gnews.get_science_news()
                 vona.talk('And now for the top scientific news.')
                 time.sleep(4*random.random())
-                for news in health:
-                    try:
-                        vona.talk(news)
-                        time.sleep(4*random.random())
-                    except:
-                        continue
+                self.news_loop(gnews, vona, science)
             except:
                 vona.talk('Error, could not get scientific news.')
+
+    def news_loop(self, gnews, vona, topic):
+        for news in topic:
+            try:
+                if not any(news in n for n in gnews.all_news):
+                    vona.talk(news)
+                    gnews.all_news.append(news)
+                    time.sleep(4*random.random())
+            except:
+                continue
 
     def goodbye(self, vona, greet):
         vona.talk(greet.bye)

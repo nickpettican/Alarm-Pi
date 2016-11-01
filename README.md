@@ -1,4 +1,4 @@
-# AlarmPi 0.0.4
+# AlarmPi 0.0.5
 A basic Python based smart alarm clock for the Raspberry Pi.
 
 > Uses Python 2.7
