@@ -1,71 +1,77 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
-        Copyright 2016 Nicolas Pettican
+# ___        AlarmPi V 1.1.1 by nickpettican            ___
+# ___   Your smart alarm clock for the Raspberry Pi     ___
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+# ___        Copyright 2017 Nicolas Pettican            ___
 
-        http://www.apache.org/licenses/LICENSE-2.0
+# ___   This software is licensed under the Apache 2    ___
+# ___   license. You may not use this file except in    ___
+# ___   compliance with the License.                    ___
+# ___   You may obtain a copy of the License at         ___
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+# ___    http://www.apache.org/licenses/LICENSE-2.0     ___
 
-'''
+# ___    Unless required by applicable law or agreed    ___
+# ___    to in writing, software distributed under      ___
+# ___    the License is distributed on an "AS IS"       ___
+# ___    BASIS, WITHOUT WARRANTIES OR CONDITIONS OF     ___
+# ___    ANY KIND, either express or implied. See the   ___
+# ___    License for the specific language governing    ___
+# ___    permissions and limitations under the License. ___
 
 from bs4 import BeautifulSoup
 import requests, json
 
 class Gnews:
-    def __init__(self):
-        self.pull = requests.Session()
-        self.user_agent = ("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
-                           "(KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36")
-        self.update_header()
-        self.world_url = 'http://news.google.com/news?output=rss'
-        self.uk_url = 'http://news.google.com/news?output=rss&ned=uk'
-        self.health_url = 'http://news.google.com/news?output=rss&ned=uk&topic=m'
-        self.tech_url = 'http://news.google.com/news?output=rss&ned=uk&topic=t'
-        self.science_url = 'http://news.google.com/news?output=rss&ned=uk&topic=snc'
+
+    # --- obtains news from Google News ---
+
+    def __init__(self, country_code):
+        
+        self.start_requests()
+
+        self.country_code = country_code
+        self.urls = {   'world news': 'http://news.google.com/news?output=rss',
+                        'country news': 'http://news.google.com/news?output=rss&ned=%s' %(country_code), 
+                        'medical news': 'http://news.google.com/news?output=rss&ned=%s&topic=m' %(country_code), 
+                        'technological news': 'http://news.google.com/news?output=rss&ned=%s&topic=t' %(country_code), 
+                        'scientific news': 'http://news.google.com/news?output=rss&ned=%s&topic=snc' %(country_code) }
         self.all_news = ['to avoid repeating news']
 
-    def update_header(self):
-        if self.pull.headers['User-Agent']:
-            if 'python' in self.pull.headers['User-Agent'].lower():
-                self.pull.headers.update({'User-Agent': self.user_agent})
+    def start_requests(self):
 
-    def get_world_news(self):
-        response = self.pull.get(self.world_url)
-        return self.news_titles(response)
+        # --- start requests session as 'pull' ---
 
-    def get_uk_news(self):
-        response = self.pull.get(self.uk_url)
-        return self.news_titles(response)
+        self.pull = requests.Session()
+        user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+        self.pull.headers.update({'User-Agent': user_agent})
 
-    def get_health_news(self):
-        response = self.pull.get(self.health_url)
-        return self.news_titles(response)
+    def get_news(self, choice):
 
-    def get_tech_news(self):
-        response = self.pull.get(self.tech_url)
-        return self.news_titles(response)
+        # --- requests news from Google News ---
 
-    def get_science_news(self):
-        response = self.pull.get(self.science_url)
-        return self.news_titles(response)
+        try:
+            response = self.pull.get(self.urls[choice])
+            return self.news_titles(response)
+        except:
+            return False
 
     def news_titles(self, response):
-        news = BeautifulSoup(response.content, 'html5lib')
+
+        # --- finds just the news titles ---
+
+        news = BeautifulSoup(response.content, 'lxml')
         news_titles_raw = news.find_all('title')
         news_titles = [news.text.encode('utf-8') for news in news_titles_raw if 'Google' not in news.text]
+        # ouch, can't get any news on Google itself - need to fix this
         return self.remove_tail(news_titles)
 
     def remove_tail(self, news_titles):
+
+        # --- removes 'tail' from titles ---
+
         news_titles_done = []
         for news in news_titles:
             head, sep, tail = news.partition(' - ')
