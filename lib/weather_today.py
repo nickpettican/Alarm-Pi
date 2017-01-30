@@ -61,25 +61,28 @@ class Weather_today:
         # --- starts requests session ---
 
         self.pull = requests.Session()
-        user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+        user_agent = ("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36")
         self.pull.headers.update({'User-Agent': user_agent})
 
     def sort_data(self, response):
 
         # --- creates the today info dictionary and returns boolean ---
 
-        if len(response['weather']) == 2:
-            self.future_forecast = True
-            later_desc = response['weather'][1]['description']
-            later_ids = response['weather'][1]['id']
-            later_mains = response['weather'][1]['main']
+        if len(response['weather']) > 1:
 
-        elif len(response['weather']) > 2:
-            self.future_forecast = True
-            first = [response['weather'][1]['description'], response['weather'][1]['id'], response['weather'][1]['main']]
-            later_desc = [first[0] + random.choice([' then ', ' followed by ', ' and ']) + main['description'] for main in response['weather'][2:]]
-            later_id = [first[1] + main['id'] for main in response['weather'][1:]]
-            later_main = [first[2] + main['main'] for main in response['weather'][1:]]
+            if len(response['weather']) == 2:
+                self.future_forecast = True
+                later_desc = [response['weather'][1]['description']]
+                later_id = response['weather'][1]['id']
+                later_main = response['weather'][1]['main']
+
+            elif len(response['weather']) > 2:
+                self.future_forecast = True
+                first = [response['weather'][1]['description'], response['weather'][1]['id'], response['weather'][1]['main']]
+                later_desc = [first[0] + random.choice([' then ', ' followed by ', ' and ']) + main['description'] for main in response['weather'][2:]]
+                later_id = [first[1] + main['id'] for main in response['weather'][1:]]
+                later_main = [first[2] + main['main'] for main in response['weather'][1:]]
 
             try:
                 today_info = {  'current_temp': float(response['main']['temp']),
