@@ -79,10 +79,11 @@ class Weather_today:
 
             elif len(response['weather']) > 2:
                 self.future_forecast = True
-                first = [response['weather'][1]['description'], response['weather'][1]['id'], response['weather'][1]['main']]
-                later_desc = [first[0] + random.choice([' then ', ' followed by ', ' and ']) + main['description'] for main in response['weather'][2:]]
-                later_id = [first[1] + main['id'] for main in response['weather'][1:]]
-                later_main = [first[2] + main['main'] for main in response['weather'][1:]]
+                first = [response['weather'][1]['description']]
+                add = [first.append(main['description']) for main in response['weather'][2:]]
+                later_desc = random.choice([', then ', ', followed by ', ', and ']).join(first)
+                later_id = [main['id'] for main in response['weather'][1:]]
+                later_main = [main['main'] for main in response['weather'][1:]]
 
             try:
                 today_info = {  'current_temp': float(response['main']['temp']),
@@ -224,7 +225,7 @@ class Weather_today:
         elif when == 'later':
             intro = random.choice(['And later on, it shows ', 'And further on, I foresee ', 'And later, data shows ', 'And later we have '])
             if len(condition) > 1:
-                return intro + ','.join(condition_desc)
+                return intro + condition_desc
             elif condition_id == self.info['condition']:
                 return random.choice(['And looks like it will be like this for the rest of the day.', 'And the rest of the day should be the same.'])
 
