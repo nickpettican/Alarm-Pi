@@ -35,7 +35,7 @@ class Alarmpi:
 
 	def __init__(self,
 				owner,
-                app_dir,
+                                app_dir,
 				tune,
 				voice_female,
 				voice_male,
@@ -157,7 +157,7 @@ class Alarmpi:
 		try:
 
 			if not Chances().one_in_twenty():
-			   self.bonni.talk(self.greet.statement)
+                                self.bonni.talk(self.greet.statement)
 			else:
 				self.funny_quotes('morning')
 			time.sleep(4*random.random())
@@ -168,6 +168,10 @@ class Alarmpi:
 			
 			self.bonni.talk(self.greet.date_today)
 			time.sleep(4*random.random())
+
+			if self.greet.day_special:
+                                self.bonni.talk(self.greet.day_special)
+                                time.sleep(4*random.random())
 		
 		except:
 			self.bonni.talk('Good morning %s!' %(self.owner))
@@ -191,8 +195,7 @@ class Alarmpi:
 
 				# --- condition ---
 				
-				#try:
-				if True:
+				try:
 					if not self.weather.rain_today:
 						self.bonni.talk(self.weather.condition)
 						if self.weather.future_forecast:
@@ -208,8 +211,8 @@ class Alarmpi:
 							self.bonni.talk(self.weather.condition)
 							if self.weather.future_forecast:
 								self.bonni.talk(self.weather.future_condition)
-				#except:
-				#	self.bonni.talk(could_not_obtain('weather condition', self.owner))
+				except:
+					self.bonni.talk(could_not_obtain('weather condition', self.owner))
 
 				if Chances().one_in_twenty():
 					self.funny_quotes('cant_go_out')
@@ -296,18 +299,17 @@ class Alarmpi:
 			
 			for news, tell in self.news.items():
 				if tell:
-					#try:
-					if True: 
+					try: 
 						self.bonni.talk('%s the top %s.' %(random.choice([	'And now for', 
 																			"Let's have a look at", 
 																			'Now reading']), news))
-						time.sleep(4*random.random())
+						#time.sleep(4*random.random())
 						top_10 = self.gnews.get_news(news)
 						self.news_loop(top_10)
 						if Chances().one_in_twenty():
 							self.funny_quotes('back_to_you')
-					#except:
-					#	self.bonni.talk(could_not_obtain('news', self.owner))
+					except:
+						self.bonni.talk(could_not_obtain('news', self.owner))
 			
 			if Chances().one_in_twenty():
 				self.funny_quotes('nobody-cares')
