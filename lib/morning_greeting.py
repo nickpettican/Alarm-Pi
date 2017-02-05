@@ -61,7 +61,7 @@ class Greeting:
 					greet = list(itertools.product(
 							['Good morning,', 'Buenos dias,', 'Rise and shine,', 'Up you get,', 'Cock-a-doodle-do,', 
 							'The early bird catches the worm, as they say,'],
-							[self.owner, self.owner, 'sleepy-head.', 'creater.', 'sir.', 'master.']))
+							[self.owner, self.owner, 'sleepy-head.', 'boss.', 'compadre.', 'fella.']))
 					
 					if self.quotes:
 						quote = list(itertools.product(
