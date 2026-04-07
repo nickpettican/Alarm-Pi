@@ -71,7 +71,7 @@ GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
 
 
-class Weather_today:
+class Weather:
 
     def __init__(self, owner, city, country_code):
 
@@ -79,7 +79,7 @@ class Weather_today:
 
         self.owner = owner
         self.city = city
-        self.pull = requests.Session()
+        self.client = requests.Session()
 
         lat, lon = self.geocode(city)
         response = self.get_weather_info(lat, lon)
@@ -105,7 +105,7 @@ class Weather_today:
 
         print(f'Geocoding {city}... ', end='')
         try:
-            response = self.pull.get(GEOCODING_URL, params={'name': city, 'count': 1, 'language': 'en', 'format': 'json'})
+            response = self.client.get(GEOCODING_URL, params={'name': city, 'count': 1, 'language': 'en', 'format': 'json'})
             data = response.json()
             result = data['results'][0]
             print(f"found: {result['name']}, {result['country']}")
@@ -128,7 +128,7 @@ class Weather_today:
                 'timezone': 'auto',
                 'forecast_days': 2,
             }
-            response = self.pull.get(FORECAST_URL, params=params)
+            response = self.client.get(FORECAST_URL, params=params)
             if response.ok:
                 print('success!')
                 return response.json()

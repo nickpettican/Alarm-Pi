@@ -24,11 +24,11 @@
 # NOTE: pyvona (Python 2 / Ivona API) has been removed.
 # Replace this stub with your chosen TTS engine (e.g. pyttsx3, Coqui TTS).
 
-class Pivona:
+class Speaker:
 
     def __init__(self, voice='Salli'):
         self.voice = voice
-        print(f'TTS stub initialised (voice: {voice}). Replace lib/vona.py with your TTS engine.')
+        print(f'TTS stub initialised (voice: {voice}). Replace lib/tts.py with your TTS engine.')
 
     def talk(self, text):
         print(text)

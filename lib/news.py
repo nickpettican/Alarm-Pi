@@ -6,10 +6,10 @@
 
 # ___        Copyright 2017 Nicolas Pettican            ___
 
-# ___   This software is licensed under the Apache 2    ___
-# ___   license. You may not use this file except in    ___
-# ___   compliance with the License.                    ___
-# ___   You may obtain a copy of the License at         ___
+# ___    This software is licensed under the Apache 2   ___
+# ___    license. You may not use this file except in   ___
+# ___    compliance with the License.                   ___
+# ___    You may obtain a copy of the License at        ___
 
 # ___    http://www.apache.org/licenses/LICENSE-2.0     ___
 
@@ -21,59 +21,52 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-from bs4 import BeautifulSoup
-import requests, json
+import requests
+import xml.etree.ElementTree as ET
 
-class Gnews:
+MAX_HEADLINES = 10
 
-    # --- obtains news from Google News ---
+
+class News:
 
     def __init__(self, country_code):
-        
-        self.start_requests()
 
-        self.country_code = country_code
-        self.urls = {   'world news': 'http://news.google.com/news?output=rss',
-                        'country news': 'http://news.google.com/news?output=rss&ned=%s' %(country_code), 
-                        'medical news': 'http://news.google.com/news?output=rss&ned=%s&topic=m' %(country_code), 
-                        'technological news': 'http://news.google.com/news?output=rss&ned=%s&topic=t' %(country_code), 
-                        'scientific news': 'http://news.google.com/news?output=rss&ned=%s&topic=snc' %(country_code) }
-        self.all_news = ['to avoid repeating news']
+        self.client = requests.Session()
+        self.client.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+        })
 
-    def start_requests(self):
+        self.urls = {
+            'world news':        'https://news.google.com/rss',
+            'country news':      f'https://news.google.com/rss?ned={country_code}',
+            'medical news':      f'https://news.google.com/rss?ned={country_code}&topic=m',
+            'technological news': f'https://news.google.com/rss?ned={country_code}&topic=t',
+            'scientific news':   f'https://news.google.com/rss?ned={country_code}&topic=snc',
+        }
+        self.seen_headlines = []
 
-        # --- start requests session as 'pull' ---
-
-        self.pull = requests.Session()
-        user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
-        self.pull.headers.update({'User-Agent': user_agent})
-
-    def get_news(self, choice):
-
-        # --- requests news from Google News ---
+    def get_news(self, category):
 
         try:
-            response = self.pull.get(self.urls[choice])
-            return self.news_titles(response)
+            response = self.client.get(self.urls[category])
+            return self.parse_headlines(response.content)
         except:
-            return False
+            return []
 
-    def news_titles(self, response):
+    def parse_headlines(self, content):
 
-        # --- finds just the news titles ---
+        root   = ET.fromstring(content)
+        titles = root.findall('.//item/title')
+        return [
+            self.format_headline(item.text)
+            for item in titles[:MAX_HEADLINES]
+            if item.text and 'Google' not in item.text
+        ]
 
-        news = BeautifulSoup(response.content, 'lxml')
-        news_titles_raw = news.find_all('title')
-        news_titles = [news.text for news in news_titles_raw if 'Google' not in news.text]
-        # ouch, can't get any news on Google itself - need to fix this
-        return self.remove_tail(news_titles)
+    def format_headline(self, raw):
 
-    def remove_tail(self, news_titles):
-
-        # --- removes 'tail' from titles ---
-
-        news_titles_done = []
-        for news in news_titles:
-            head, sep, tail = news.partition(' - ')
-            news_titles_done.append(head)
-        return [line.replace('&', 'and') for line in news_titles_done]
+        # "Headline text - Source Name" -> "Source Name says: Headline text."
+        headline, sep, source = raw.rpartition(' - ')
+        if sep and source:
+            return f"{source.strip()} says: {headline.strip()}."
+        return raw.strip()
