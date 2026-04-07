@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -39,10 +39,7 @@ class Alarmpi:
 				tune,
 				voice_female,
 				voice_male,
-				ivona_auth,
-				ivona_auth_secret,
 				weather,
-				weather_auth,
 				city,
 				country_code,
 				news,
@@ -54,23 +51,23 @@ class Alarmpi:
 
 		self.pwd = app_dir
 
-		self.response = { 'weather': False, 
+		self.response = { 'weather': False,
 						  'news': False}
 		self.owner = owner
 		self.tune = tune
 		self.tell_weather = weather
 		self.tell_news = news
 		self.news = {	'world news': world_news,
-						'country news': country_news, 
-						'medical news': health_news, 
-						'technological news': tech_news, 
+						'country news': country_news,
+						'medical news': health_news,
+						'technological news': tech_news,
 						'scientific news': science_news	}
-		self.greet = Greeting(owner = self.owner)
-		self.start_bonni(ivona_auth, ivona_auth_secret, voice_female, voice_male)
-		self.get_weather(weather_auth, city, country_code)
+		self.greet = Greeting(owner=self.owner, app_dir=self.pwd)
+		self.start_bonni(voice_female, voice_male)
+		self.get_weather(city, country_code)
 		self.get_news(country_code)
 
-	def start_bonni(self, ivona_auth, ivona_auth_secret, voice_female, voice_male):
+	def start_bonni(self, voice_female, voice_male):
 
 		# --- creates Bonni for talking ---
 
@@ -87,35 +84,33 @@ class Alarmpi:
 					else:
 						voice = 'Brian'
 			else:
-				print 'ERROR, the voice has to be either male or female!'
+				print('ERROR, the voice has to be either male or female!')
 				exit()
 
-			self.bonni = Pivona(voice = voice, auth = ivona_auth, auth_secret = ivona_auth_secret)
+			self.bonni = Pivona(voice=voice)
 		except:
-			print 'ERROR while creating voice!'
+			print('ERROR while creating voice!')
 
-	def get_weather(self, weather_auth, city, country_code):
+	def get_weather(self, city, country_code):
 
-		# --- obtains weather from Open Weather API ---
+		# --- obtains weather from Open-Meteo API ---
 
 		if self.tell_weather:
-			try:	
-				self.weather = Weather_today(	owner = self.owner, 
-												auth = weather_auth, 
-												city = city, 
-												country_code = country_code)
+			try:
+				self.weather = Weather_today(	owner=self.owner,
+												city=city,
+												country_code=country_code)
 				self.response['weather'] = True
 			except:
-				print 'ERROR while obtaining weather info!\n'
+				print('ERROR while obtaining weather info!\n')
 				time.sleep(5)
 				try:
-					self.weather = Weather_today(	owner = self.owner, 
-													auth = weather_auth, 
-													city = city, 
-													country_code = country_code)
+					self.weather = Weather_today(	owner=self.owner,
+													city=city,
+													country_code=country_code)
 					self.response['weather'] = True
 				except:
-					self.bonni.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." %(self.owner))
+					self.bonni.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." % self.owner)
 
 	def get_news(self, country_code):
 
@@ -126,29 +121,29 @@ class Alarmpi:
 			self.response['news'] = True
 
 		except:
-			print 'ERROR while starting Google News!\n'
+			print('ERROR while starting Google News!\n')
 			time.sleep(5)
 
 			try:
 				self.gnews = Gnews(country_code)
 				self.response['news'] = True
 			except:
-				self.bonni.talk("Sorry %s, I couldn't get the news module started." %(self.owner))
+				self.bonni.talk("Sorry %s, I couldn't get the news module started." % self.owner)
 
 	def alarm_sound(self):
 
 		# --- plays the alarm tune ---
 
 		try:
-			print 'Choosing tune... ',
+			print('Choosing tune... ', end='')
 			tunes_dir = choose_tune(self.pwd)
-			
-			print 'playing... ',
+
+			print('playing... ', end='')
 			play_sound(tunes_dir, self.choose_from_dir(tunes_dir, '.mp3'))
-			
-			print 'DONE!\n'
+
+			print('DONE!\n')
 		except:
-			print 'ERROR while playing tune!\n'
+			print('ERROR while playing tune!\n')
 
 	def morning_greeting(self):
 
@@ -165,16 +160,16 @@ class Alarmpi:
 			if self.greet.quote:
 				self.bonni.talk(self.greet.quote)
 				time.sleep(4*random.random())
-			
+
 			self.bonni.talk(self.greet.date_today)
 			time.sleep(4*random.random())
 
 			if self.greet.day_special:
                                 self.bonni.talk(self.greet.day_special)
                                 time.sleep(4*random.random())
-		
+
 		except:
-			self.bonni.talk('Good morning %s!' %(self.owner))
+			self.bonni.talk('Good morning %s!' % self.owner)
 
 	def weather_forecast(self):
 
@@ -183,18 +178,18 @@ class Alarmpi:
 		if self.tell_weather and self.response['weather']:
 
 			try:
-				
+
 				# --- temperature ---
-				
+
 				try:
 					self.bonni.talk(self.weather.temperature)
 				except:
 					self.bonni.talk(could_not_obtain('temperature', self.owner))
-				
+
 				time.sleep(6*random.random())
 
 				# --- condition ---
-				
+
 				try:
 					if not self.weather.rain_today:
 						self.bonni.talk(self.weather.condition)
@@ -203,7 +198,10 @@ class Alarmpi:
 
 					else:
 						if Chances().one_in_ten():
-							if int(self.weather.info['condition_id']) in range(500, 600) and float(self.weather.info['wind']) < 25.00:
+							condition_id = int(self.weather.info['condition_id'])
+							wind = float(self.weather.info['wind'])
+							rain_codes = {500, 501, 502, 520, 521, 522}
+							if condition_id in rain_codes and wind < 25.00:
 								self.funny_quotes('rain_sideways')
 							else:
 								self.funny_quotes('rain')
@@ -243,10 +241,10 @@ class Alarmpi:
 
 		elif self.tell_weather and not self.response['weather']:
 			self.funny_quotes('dont_have_the_power')
-			self.bonni.talk("%s I couldn't obtain the weather. You'll have to look out of the window today %s." %(random.choice(['Looks like', "I'm afraid", 'Sorry, but']), self.owner))
+			self.bonni.talk("%s I couldn't obtain the weather. You'll have to look out of the window today %s." % (random.choice(['Looks like', "I'm afraid", 'Sorry, but']), self.owner))
 
 		else:
-			print 'Weather disabled.'
+			print('Weather disabled.')
 
 	def funny_quotes(self, statement):
 
@@ -255,14 +253,14 @@ class Alarmpi:
 		self.funny_sounds_path = self.pwd + '/sounds/funny/'
 
 		if 'rain' in statement:
-			self.bonni(random.choice([  'And now for the weather. Over to you Ollie.', 
-										'And now, over to Ollie Williams for the weather.', 
+			self.bonni.talk(random.choice([  'And now for the weather. Over to you Ollie.',
+										'And now, over to Ollie Williams for the weather.',
 										"And now here's Ollie Williams with the black-you-weather forecast."]))
 			if statement == 'rain':
 				play_sound(self.funny_sounds_path, 'Its_Gon_Rain.mp3')
 			elif statement == 'rain_sideways':
 				play_sound(self.funny_sounds_path, 'raining_sideways.mp3')
-			self.bonni('Thanks Olly.')
+			self.bonni.talk('Thanks Olly.')
 
 		if statement == 'nobody-cares':
 			play_sound(self.funny_sounds_path, 'OMG_WHO_THE_HELL_CARES.mp3')
@@ -293,31 +291,30 @@ class Alarmpi:
 
 	def news_for_today(self):
 
-		# --- the anchorwoman --- 
+		# --- the anchorwoman ---
 
 		if self.tell_news and self.response['news']:
-			
+
 			for news, tell in self.news.items():
 				if tell:
-					try: 
-						self.bonni.talk('%s the top %s.' %(random.choice([	'And now for', 
-																			"Let's have a look at", 
+					try:
+						self.bonni.talk('%s the top %s.' % (random.choice([	'And now for',
+																			"Let's have a look at",
 																			'Now reading']), news))
-						#time.sleep(4*random.random())
 						top_10 = self.gnews.get_news(news)
 						self.news_loop(top_10)
 						if Chances().one_in_twenty():
 							self.funny_quotes('back_to_you')
 					except:
 						self.bonni.talk(could_not_obtain('news', self.owner))
-			
+
 			if Chances().one_in_twenty():
 				self.funny_quotes('nobody-cares')
 
 	def news_loop(self, top_10):
 
 		# --- tells the top news ---
-		
+
 		for news in top_10:
 			try:
 				if not any(news in n for n in self.gnews.all_news):
@@ -338,7 +335,7 @@ class Alarmpi:
 			self.bonni.talk(self.greet.bye)
 			time.sleep(4*random.random())
 		except:
-			self.bonni.talk('Bye %s' %(random.choice([self.owner, 'now', 'bye'])))
+			self.bonni.talk('Bye %s' % random.choice([self.owner, 'now', 'bye']))
 
 	def main(self):
 

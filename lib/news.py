@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -64,7 +64,7 @@ class Gnews:
 
         news = BeautifulSoup(response.content, 'lxml')
         news_titles_raw = news.find_all('title')
-        news_titles = [news.text.encode('utf-8') for news in news_titles_raw if 'Google' not in news.text]
+        news_titles = [news.text for news in news_titles_raw if 'Google' not in news.text]
         # ouch, can't get any news on Google itself - need to fix this
         return self.remove_tail(news_titles)
 

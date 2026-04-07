@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -21,17 +21,14 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-import pyvona, random
+# NOTE: pyvona (Python 2 / Ivona API) has been removed.
+# Replace this stub with your chosen TTS engine (e.g. pyttsx3, Coqui TTS).
 
 class Pivona:
 
-		def __init__(self, voice, auth, auth_secret):
-	
-				vona = pyvona.create_voice(auth, auth_secret)
-				vona.voice_name = voice
-				self.vona = vona
-				
-		def talk(self, talk):
-	
-				print talk
-				self.vona.speak(talk)
+    def __init__(self, voice='Salli'):
+        self.voice = voice
+        print(f'TTS stub initialised (voice: {voice}). Replace lib/vona.py with your TTS engine.')
+
+    def talk(self, text):
+        print(text)

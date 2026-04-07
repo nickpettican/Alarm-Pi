@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
 # ___   Your smart alarm clock for the Raspberry Pi     ___
@@ -34,10 +34,7 @@ Alarmpi(owner = 'your name/nickname',               # name by which it will gree
         tune = True or False,                       # enable or disable alarm tune
         voice_female = True or False or name,       # make the voice female or give specific name
         voice_male = True or False or name,         # make the voice male or give specific name
-        auth = 'your Ivona auth key',               # Ivona auth key
-        auth_secret = 'your Ivona auth secret',     # Ivona auth secret key
         weather = True or False,                    # turn weather forecasting on / off
-            weather_auth='your Open Weather auth',  # Open Weather auth code for weather
             city='London',                          # Your city name
             country_code='uk',                      # Your country 2 character code
         news = True or False,                       # turn news telling on / off
@@ -60,10 +57,7 @@ def main():
                         tune = False,
                         voice_female = True,
                         voice_male = False,
-                        ivona_auth = 'auth',
-                        ivona_auth_secret = 'auth_secret',
                         weather = True,
-                            weather_auth='auth',
                             city='London',
                             country_code='uk',
                         news = False,
@@ -85,7 +79,7 @@ if __name__ == "__main__":
     # --- turn speakers on ---
     
     if 'linux' in platform:
-        os.system(home_directory + '/audio_output/./AUDIO_JACK.sh')
+        os.system(app_directory + '/audio_output/./AUDIO_JACK.sh')
     
     # --- main function ---
     
@@ -95,4 +89,4 @@ if __name__ == "__main__":
     # --- turn speakers off ---
     
     if 'linux' in platform:
-        os.system(home_directory + '/audio_output/./HDMI_out.sh')
+        os.system(app_directory + '/audio_output/./HDMI_out.sh')

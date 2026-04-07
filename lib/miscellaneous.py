@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -22,9 +22,7 @@
 # ___    permissions and limitations under the License. ___
 
 import random, os
-from player import *
-
-app_home_dir = '/home/pi/alarmpi'
+from lib.player import *
 
 class Chances:
 
@@ -40,14 +38,14 @@ class Chances:
 
 	def one_in_ten(self):
 
-		return random.choice([	True, False, False, False, False, 
+		return random.choice([	True, False, False, False, False,
 								False, False, False, False, False])
 
 	def one_in_twenty(self):
 
-		return random.choice([	True, False, False, False, False, 
-								False, False, False, False, False, 
-								False, False, False, False, False, 
+		return random.choice([	True, False, False, False, False,
+								False, False, False, False, False,
+								False, False, False, False, False,
 								False, False, False, False, False])
 
 def could_not_obtain(statement, owner):
@@ -56,7 +54,9 @@ def could_not_obtain(statement, owner):
 
     if Chances().one_in_five():
 
-    	play_sound(app_home_dir + '/sounds/funny/', 'dont_have_the_power.mp3')
+        play_sound(os.path.join(os.path.dirname(__file__), '..', 'sounds', 'funny') + '/', 'dont_have_the_power.mp3')
 
-    return "%s, I couldn't obtain the %s %s, %s %s." %( random.choice(['Oops', 'Error', 'Darn it', 'Oh boy']), statement, random.choice(['data', 'info', 'information']), 
-                                                        random.choice(['sorry', 'apologies', "I hope it's a nice day"]), owner)
+    return "%s, I couldn't obtain the %s %s, %s %s." % (
+        random.choice(['Oops', 'Error', 'Darn it', 'Oh boy']), statement,
+        random.choice(['data', 'info', 'information']),
+        random.choice(['sorry', 'apologies', "I hope it's a nice day"]), owner)
