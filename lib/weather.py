@@ -52,20 +52,10 @@ WMO_TO_MAIN = {
     96: 'Thunderstorm', 99: 'Thunderstorm',
 }
 
-# Map WMO codes to OWM-equivalent condition IDs (preserves get_condition logic)
-WMO_TO_CONDITION_ID = {
-    0: 800,
-    1: 801, 2: 802, 3: 804,
-    45: 741, 48: 741,
-    51: 300, 53: 301, 55: 302,
-    61: 500, 63: 501, 65: 502,
-    71: 600, 73: 601, 75: 602,
-    77: 611,
-    80: 500, 81: 501, 82: 502,
-    85: 620, 86: 621,
-    95: 200,
-    96: 201, 99: 202,
-}
+# WMO codes that involve rain or snow (used to gate wind reporting)
+_RAIN_WMO = frozenset([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99])
+_SNOW_WMO = frozenset([71, 73, 75, 77, 85, 86])
+_RAIN_SNOW_WMO = _RAIN_WMO | _SNOW_WMO
 
 GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
@@ -73,15 +63,22 @@ FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
 
 class Weather:
 
-    def __init__(self, owner, city, country_code):
+    def __init__(self, owner, city=None, country_code=None, latitude=None, longitude=None):
 
         # --- start Weather forecast ---
 
         self.owner = owner
-        self.city = city
+        self.city  = city if city else 'your area'
         self.client = requests.Session()
+        self.sun = None  # populated only if get_sun_rise_set() is called explicitly
 
-        lat, lon = self.geocode(city)
+        if latitude is not None and longitude is not None:
+            lat, lon = latitude, longitude
+        elif city:
+            lat, lon = self.geocode(city)
+        else:
+            raise ValueError("Provide either 'city' or both 'latitude' and 'longitude'.")
+
         response = self.get_weather_info(lat, lon)
 
         if response:
@@ -89,15 +86,12 @@ class Weather:
         if self.info:
             self.get_temperature()
             self.rain_today = False
-            self.condition = self.get_condition(self.info['condition'],
-                                                self.info['condition_id'],
+            self.condition = self.get_condition(self.info['wmo_code'],
                                                 self.info['condition_desc'], 'now')
             if self.future_forecast:
-                self.future_condition = self.get_condition(self.info['future_condition'],
-                                                           self.info['future_condition_id'],
+                self.future_condition = self.get_condition(self.info['future_wmo_code'],
                                                            self.info['future_condition_desc'], 'later')
             self.get_wind()
-            self.get_sun_rise_set(self.info)
 
     def geocode(self, city):
 
@@ -156,11 +150,11 @@ class Weather:
                 'current_temp': float(current['temperature_2m']),
                 'current_low':  float(daily['temperature_2m_min'][0]),
                 'current_high': float(daily['temperature_2m_max'][0]),
+                'wmo_code':      wmo,
                 'condition':      WMO_TO_MAIN.get(wmo, 'Unknown'),
-                'condition_id':   WMO_TO_CONDITION_ID.get(wmo, 800),
                 'condition_desc': WMO_DESCRIPTIONS.get(wmo, 'clear sky'),
+                'future_wmo_code':       tomorrow_wmo,
                 'future_condition':      WMO_TO_MAIN.get(tomorrow_wmo, 'Unknown'),
-                'future_condition_id':   WMO_TO_CONDITION_ID.get(tomorrow_wmo, 800),
                 'future_condition_desc': WMO_DESCRIPTIONS.get(tomorrow_wmo, 'clear sky'),
                 'wind':    float(current['wind_speed_10m']),
                 'sunrise': arrow.get(daily['sunrise'][0]),
@@ -186,14 +180,14 @@ class Weather:
         temperature = ' '.join(random.choice(options)) % (temp, high, low)
 
         if temp < 0 and high < 0:
-            state   = random.choice(['fhfuhfuh freezing', 'absolutely freezing', 'very very cold', "colder than a polar bear's butt", 'minus zero'])
+            state   = random.choice(['fhfuhfuh freezing', 'absolutely freezing', 'very very cold', "colder than a polar bear's butt", 'sub-zero'])
             clothes = random.choice(['your warmest clothes', 'three layers of jackets', 'plenty of clothes and gloves', 'all your wardrobe', 'at least 5 scarves'])
             advice  = random.choice(["don't you dare catch a cold", 'stay warm', "don't stay outside for too long", 'stay inside like a caveman',
                                      "of course, it's hot %s time" % random.choice(['tea', 'coffee', 'beverage'])])
 
         if temp in range(0, 4) or (temp < 0 and high > 0):
-            state   = random.choice(['colder than a day-old dumpling', 'very cold', 'freezing', 'very very chilly'])
-            clothes = random.choice(['warm clothes', 'a big coat', 'plenty of clothes', 'a blanket, but not outside though', 'your scarf'])
+            state   = random.choice(['colder than a day-old dumpling', 'colder than a Monday morning', 'very cold', 'freezing', 'very very chilly'])
+            clothes = random.choice(['warm clothes', 'a big coat', 'plenty of clothes', 'your thickest jacket', 'your scarf'])
             advice  = random.choice(["don't catch a cold", 'stay warm', "don't stay outside for too long", 'stay inside',
                                      "of course, it's hot %s time" % random.choice(['tea', 'coffee', 'beverage'])])
 
@@ -212,14 +206,14 @@ class Weather:
         if temp in range(12, 16):
             state   = random.choice(['chilly but okay', 'mild', 'pretty mild'])
             clothes = random.choice(['a jumper and a jacket', 'a thin jacket', 'spring clothes', 'a jumper'])
-            advice  = random.choice(['cover your chest', 'stay warm', "don't stay out in the cold", 'stay inside',
+            advice  = random.choice(['layer up just in case', "a warm drink wouldn't go amiss", 'enjoy the fresh air',
                                      'make a warm %s' % random.choice(['tea', 'coffee', 'beverage'])])
 
         if temp in range(16, 20):
             state   = random.choice(['kinda warm', 'warm ish', 'a bit warm', 'pleasant'])
             clothes = random.choice(['a shirt or jumper', 'a t-shirt and jacket', 'something loose'])
             advice  = random.choice(['enjoy the day', 'get some fresh air', "don't stay inside all day", 'get out there',
-                                     'make yourself %s' % random.choice(['tea', 'coffee', 'beverage'])])
+                                     'make yourself %s' % random.choice(['tea', 'coffee', 'a beverage'])])
 
         if temp in range(20, 24):
             state   = random.choice(['nice and warm', 'warm', 'very nice', 'pleasant', 'very pleasant'])
@@ -241,11 +235,12 @@ class Weather:
 
         when       = random.choice(['now', 'right now', 'at the moment', 'at this time'])
         what_to_do = random.choice(['Make sure to', 'Be sure to', 'Do', 'Please'])
+        location   = random.choice(['outside', 'in %s' % self.city])
 
         self.temperature = "It's %s %s %s. %s. %s wear %s, and %s." % (
-            state, random.choice(['outside', 'in %s' % self.city]), when, temperature, what_to_do, clothes, advice)
+            state, location, when, temperature, what_to_do, clothes, advice)
 
-    def get_condition(self, condition, condition_id, condition_desc, when):
+    def get_condition(self, wmo_code, condition_desc, when):
 
         # --- generates random statements to describe the weather conditions ---
 
@@ -254,100 +249,81 @@ class Weather:
 
         elif when == 'later':
             intro = random.choice(['And later on, it shows ', 'And further on, I foresee ', 'And later, data shows ', 'And later we have '])
-            if condition_id == self.info['condition_id']:
+            if wmo_code == self.info['wmo_code']:
                 return random.choice(['And looks like it will be like this for the rest of the day.', 'And the rest of the day should be the same.'])
             return intro + condition_desc
 
         else:
             return 'Something went wrong in the "get condition function".'
 
-        if 200 <= condition_id < 300:
+        if wmo_code >= 96:
+            comment = random.choice(['Ouch, watch your head.', "Don't get hit by one", "It doesn't usually last long"])
+            advice  = random.choice(['Be careful', 'Good luck out there', 'Be cautious'])
+
+        elif wmo_code == 95:
             comment = random.choice(['Scary! Although I kinda like it', 'Are you scared?', 'Oh My God', "I'm so scared %s" % self.owner, 'Bazinga'])
             advice  = random.choice(['Be careful out there', "Don't get struck by lightning", 'Good luck out there'])
 
-        if 300 <= condition_id < 400:
-            comment = random.choice(["Well let's enjoy the day regardless", "Rain rain go away, come again another day", "Let's hope it gets better", "It could be worse"])
-            advice  = random.choice(["Don't forget your umbrella", "Take your umbrella %s, don't forget" % self.owner, 'Take your umbrella just in case'])
+        elif wmo_code in (85, 86):
+            comment = random.choice(['Not the nicest of weather conditions..', "I don't mind snow, but I do mind this", "Let's hope it gets better", "Let's not let this get in the way of an awesome day"])
+            advice  = random.choice(['Take your umbrella', 'Use your umbrella today', 'Layer up out there'])
 
-        if 500 <= condition_id < 600:
+        elif wmo_code in (71, 73, 75, 77):
+            comment = random.choice(['Snow snow snow, I love snow; can you tell?', 'Snow day, oh yeah', 'Frosty the snowman, was a holly, jolly, soul; he would talk like me, and say hello, until I ate his nose'])
+            advice  = random.choice(['Can I be cheesy and ask to build a snowman?', 'Does this mean I can skip work?', 'Fun times are ahead!'])
+
+        elif wmo_code in (61, 63, 65, 80, 81, 82):
             self.rain_today = True
             comment = random.choice(["Darn it, rain really fries my circuits", "Well, just another rainy day", "Yikes, wish it was sunny."])
             advice  = random.choice(["Don't forget your umbrella", "Cover up and take your umbrella", "Take your umbrella %s" % self.owner])
 
-        if 600 <= condition_id < 603:
-            comment = random.choice(['Snow snow snow, I love snow; can you tell?', 'Snow day, oh yeah', 'Frosty the snowman, was a holly, jolly, soul; he would talk like me, and say hello, until I ate his nose'])
-            advice  = random.choice(['Can I be cheesy and ask to build a snowman?', 'Does this mean I can skip work?', 'Fun times are ahead!'])
+        elif wmo_code in (51, 53, 55):
+            comment = random.choice(["Well let's enjoy the day regardless", "Rain rain go away, come again another day", "Let's hope it gets better", "It could be worse"])
+            advice  = random.choice(["Don't forget your umbrella", "Take your umbrella %s, don't forget" % self.owner, 'Take your umbrella just in case'])
 
-        if 611 <= condition_id < 700:
-            comment = random.choice(['Not the nicest of weather conditions..', "I don't mind snow, but I do mind this", "Let's hope it gets better", "Let's not let this get in the way of an awesome day"])
-            advice  = random.choice(["Don't forget your umbrella", 'Take your umbrella', "Use your umbrella today"])
-
-        if 700 <= condition_id < 762:
+        elif wmo_code in (45, 48):
             comment = random.choice(["At least it's not raining", "Well, it could be better", "Kinda creepy weather condition"])
             advice  = random.choice(["I can't see anything %s" % self.owner, "Unless you're driving you'll be fine.", "Try not to walk into a lamp-post"])
 
-        if 762 <= condition_id < 800:
-            comment = random.choice(['Oh bum, this is not good', 'Oh My God'])
-            advice  = random.choice(["Get out of there, or not: I don't know", 'Be careful and good luck'])
+        elif wmo_code == 0:
+            comment = random.choice(["I love standing under the stars... before you say anything, don't forget: the Sun is a star", "Yay, Sunshine", 'Good morning Sunshine, the Earth says...: hello', 'Loving life'])
+            advice  = random.choice(['Although clear skies sometimes makes it colder...', 'Absence of clouds makes me happy', "It's just as clear as my source code: wink wink", "Let's enjoy it"])
 
-        if 800 == condition_id:
-            comment = random.choice(["I love standing under the stars... before you say anything, don't forget: the Sun is a star", "Yay, Sunshine", 'Good morning Sunshine, the Earth says: hello', 'Loving life'])
-            advice  = random.choice(['Although clear skies sometimes makes it colder..', 'Absense of clouds makes me happy', "It's just as clear as my source code: wink wink", "Let's enjoy it"])
-
-        if 800 < condition_id < 900:
-            comment = random.choice(['Just another cloudy day in %s' % self.city, "Come out Sun. Where are you?", "At least it's not raining", "Grey, grim: that is all."])
-            advice  = random.choice(['Be positive though', "It's okay"])
-
-        if 903 <= condition_id < 906:
-            comment = random.choice(["I don't get the point of this information either"])
-            advice  = random.choice(["But that's all I could find for now"])
-
-        if condition_id == 906:
-            comment = random.choice(['Ouch, watch your head.', "Don't get hit by one", "It doen't usually last long"])
-            advice  = random.choice(['Be careful', 'Good luck out there', 'Be cautious'])
-
-        if 950 <= condition_id < 957:
-            comment = random.choice(["Don't get blown away", "Not the best news"])
-            advice  = random.choice(['Be careful', 'Good luck out there'])
-
-        if 957 <= condition_id < 961:
-            comment = random.choice(["Wow, it's pretty windy outside", "You'll get blown away if you go outside"])
-            advice  = random.choice(['Be careful', 'Good luck'])
-
-        if 961 <= condition_id < 963 or 900 <= condition_id <= 902:
-            comment = random.choice(['Oh My Fucking God, get into a bath and strap yourself to a pipe', 'This is not a joke, get the hell out of town while you can'])
-            advice  = random.choice(['And take me with you', "And don't forget about me"])
+        else:  # 1, 2, 3 (mainly clear / partly cloudy / overcast)
+            comment = random.choice(['Just another cloudy day in %s' % self.city, "Come out Sun. Where are you?", "At least it's not raining", "Grey... grim...: that is all."])
+            advice  = random.choice(['Be positive though', "It's okay", 'Every cloud has a silver lining'])
 
         self.condition = "%s %s. %s. %s." % (intro, condition_desc, comment, advice)
         return self.condition
 
     def get_wind(self):
 
-        # --- generates statements to describe the wind speed (km/h) ---
+        # --- reports wind only when it accompanies rain or snow and speed is notable ---
 
-        speed        = float(self.info['wind'])
-        condition_id = int(self.info['condition_id'])
+        speed   = float(self.info['wind'])
+        wmo     = int(self.info['wmo_code'])
+        is_rain = wmo in _RAIN_WMO
+        is_snow = wmo in _SNOW_WMO
 
-        if speed < 20.00:
-            if condition_id in range(200, 600):
-                self.wind = "Luckily there's very little wind, so the rain shouldn't be too bad."
-            else:
-                self.wind = False
-        elif 20.00 <= speed < 40.00:
-            if condition_id in range(200, 600):
-                self.wind = "It's windy today. Bring a strong umbrella just in case."
-            else:
-                self.wind = "There's wind today. Nothing to get blown away with though, hopefully."
-        elif speed >= 40.00:
-            if condition_id in range(200, 600):
-                self.wind = "Sorry to be the bearer of bad news. It's very windy and raining outside. So it might be raining sideways. Bring your strongest umbrella!"
-            else:
-                self.wind = "I must warn you. It's pretty windy outside! So take care!"
+        if (is_rain or is_snow) and speed >= 20.0:
+            if is_rain:
+                if speed >= 40.0:
+                    self.wind = "Sorry to be the bearer of bad news. It's very windy and raining outside. So it might be raining sideways. Bring your strongest umbrella!"
+                else:
+                    self.wind = "It's windy today. Bring a strong umbrella just in case."
+            else:  # snow
+                if speed >= 40.0:
+                    self.wind = "It's very windy and snowing out there. Visibility could be poor, so take extra care."
+                else:
+                    self.wind = "It's a bit windy along with the snow. Layer up and brace yourself!"
+        else:
+            self.wind = False
 
-    def get_sun_rise_set(self, info):
+    def get_sun_rise_set(self, info=None):
 
         # --- generates random statements to describe sunrise and sunset ---
 
+        info     = info or self.info
         time_now = arrow.now()
         sunrise  = info['sunrise']
         sunset   = info['sunset']
@@ -378,3 +354,4 @@ class Weather:
                 state_rise_short, sunrise.format('HH:mm'), sunrise_time,
                 state_set_short,  sunset.format('HH:mm'),  sunset_time),
         ])
+        return self.sun
