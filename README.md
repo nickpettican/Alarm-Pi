@@ -1,4 +1,4 @@
-# AlarmPi 1.1.1
+# AlarmPi 2.0.0
 Your smart alarm clock for the Raspberry Pi.
 
 > Python 3 · Open-Meteo · Piper TTS · Google News RSS
