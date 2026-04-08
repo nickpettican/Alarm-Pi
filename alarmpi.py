@@ -21,13 +21,14 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-import time, random, os, pygame
+import time, random, os
 from lib.utils import *
 from lib.player import *
 from lib.tts import Speaker
 from lib.greeting import Greeting
 from lib.weather import Weather
 from lib.news import News
+from lib.personality import SOUND_ODDS, NEWS_INTROS, pick
 
 class Alarmpi:
 
@@ -44,10 +45,12 @@ class Alarmpi:
 				longitude=None,
 				news_enabled=False,
 				world_news=False,
-				country_news=False,
+				local_news=False,
 				health_news=False,
 				tech_news=False,
-				science_news=False):
+				science_news=False,
+				search_queries=None,
+				personality='bubbly'):
 
 		self.pwd = app_dir
 
@@ -56,14 +59,17 @@ class Alarmpi:
 		self.tune            = tune
 		self.weather_enabled = weather_enabled
 		self.news_enabled    = news_enabled
+		self.personality     = personality if personality in SOUND_ODDS else 'bubbly'
+		self._odds           = SOUND_ODDS[self.personality]
 		self.news_categories = {
-			'world news':        world_news,
-			'country news':      country_news,
-			'medical news':      health_news,
-			'technological news': tech_news,
-			'scientific news':   science_news,
+			'world news':  world_news,
+			'local news':  local_news,
+			'health news': health_news,
+			'tech news':   tech_news,
+			'science news': science_news,
 		}
-		self.greeting = Greeting(owner=self.owner, app_dir=self.pwd)
+		self.search_queries = search_queries or []
+		self.greeting = Greeting(owner=self.owner, app_dir=self.pwd, personality=self.personality)
 		self._init_speaker(piper_executable, piper_model)
 		self._init_weather(city, country_code, latitude, longitude)
 		self._init_news(country_code)
@@ -80,14 +86,14 @@ class Alarmpi:
 		if self.weather_enabled:
 			try:
 				self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
-				                       latitude=latitude, longitude=longitude)
+				                       latitude=latitude, longitude=longitude, personality=self.personality)
 				self.response['weather'] = True
-			except:
-				print('ERROR while obtaining weather info!\n')
-				time.sleep(5)
+			except Exception as e:
+				print(f'ERROR while obtaining weather info: {e}\n')
+				time.sleep(1)
 				try:
 					self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
-					                       latitude=latitude, longitude=longitude)
+					                       latitude=latitude, longitude=longitude, personality=self.personality)
 					self.response['weather'] = True
 				except:
 					self.speaker.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." % self.owner)
@@ -95,13 +101,13 @@ class Alarmpi:
 	def _init_news(self, country_code):
 
 		try:
-			self.news_reader = News(country_code)
+			self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
 			self.response['news'] = True
-		except:
-			print('ERROR while starting Google News!\n')
-			time.sleep(5)
+		except Exception as e:
+			print(f'ERROR while starting Google News: {e}\n')
+			time.sleep(1)
 			try:
-				self.news_reader = News(country_code)
+				self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
 				self.response['news'] = True
 			except:
 				self.speaker.talk("Sorry %s, I couldn't get the news module started." % self.owner)
@@ -122,22 +128,22 @@ class Alarmpi:
 	def morning_greeting(self):
 
 		try:
-			if not Chances().one_in_twenty():
+			if not Chances().one_in(self._odds['morning']):
 				self.speaker.talk(self.greeting.statement)
 			else:
 				self.funny_quotes('morning')
-			time.sleep(4*random.random())
+			time.sleep(2*random.random())
 
 			if self.greeting.quote:
 				self.speaker.talk(self.greeting.quote)
-				time.sleep(4*random.random())
+				time.sleep(2*random.random())
 
 			self.speaker.talk(self.greeting.date_today)
-			time.sleep(4*random.random())
+			time.sleep(2*random.random())
 
 			if self.greeting.day_special:
 				self.speaker.talk(self.greeting.day_special)
-				time.sleep(4*random.random())
+				time.sleep(2*random.random())
 
 		except:
 			self.speaker.talk('Good morning %s!' % self.owner)
@@ -155,7 +161,7 @@ class Alarmpi:
 				except:
 					self.speaker.talk(could_not_obtain('temperature', self.owner))
 
-				time.sleep(6*random.random())
+				time.sleep(3*random.random())
 
 				# --- condition ---
 
@@ -165,7 +171,7 @@ class Alarmpi:
 						if self.weather.future_forecast:
 							self.speaker.talk(self.weather.future_condition)
 					else:
-						if Chances().one_in_ten():
+						if Chances().one_in(self._odds['rain']):
 							wmo_code   = int(self.weather.info['wmo_code'])
 							wind       = float(self.weather.info['wind'])
 							rain_codes = {61, 63, 65, 80, 81, 82}
@@ -178,12 +184,12 @@ class Alarmpi:
 							if self.weather.future_forecast:
 								self.speaker.talk(self.weather.future_condition)
 				except:
-					self.speaker.talk(could_not_obtain('weather condition', self.owner))
+					self.speaker.talk(could_not_obtain('weather condition', self.owner, self._odds['error']))
 
-				if Chances().one_in_twenty():
+				if Chances().one_in(self._odds['cant_go_out']):
 					self.funny_quotes('cant_go_out')
 
-				time.sleep(6*random.random())
+				time.sleep(3*random.random())
 
 				# --- wind ---
 
@@ -191,9 +197,9 @@ class Alarmpi:
 					if self.weather.wind:
 						self.speaker.talk(self.weather.wind)
 				except:
-					self.speaker.talk(could_not_obtain('wind', self.owner))
+					self.speaker.talk(could_not_obtain('wind', self.owner, self._odds['error']))
 
-				time.sleep(6*random.random())
+				time.sleep(3*random.random())
 
 				# --- astrology ---
 
@@ -203,10 +209,10 @@ class Alarmpi:
 				except:
 					self.speaker.talk(could_not_obtain('astrology', self.owner))
 
-				time.sleep(6*random.random())
+				time.sleep(3*random.random())
 
 			except:
-				self.speaker.talk(could_not_obtain('weather', self.owner))
+				self.speaker.talk(could_not_obtain('weather', self.owner, self._odds['error']))
 
 		elif self.weather_enabled and not self.response['weather']:
 			self.funny_quotes('dont_have_the_power')
@@ -216,6 +222,9 @@ class Alarmpi:
 			print('Weather disabled.')
 
 	def funny_quotes(self, statement):
+
+		if self.personality == 'serious':
+			return
 
 		funny_sounds_path = self.pwd + '/sounds/funny/'
 
@@ -231,22 +240,30 @@ class Alarmpi:
 			self.speaker.talk('Thanks Olly.')
 
 		if statement == 'nobody-cares':
-			play_sound(funny_sounds_path, 'OMG_WHO_THE_HELL_CARES.mp3')
+			if self.personality == 'chaos':
+				play_sound(funny_sounds_path, random.choice(['OMG_WHO_THE_HELL_CARES.mp3', 'thats_retarded.mp3']))
+			else:
+				play_sound(funny_sounds_path, 'OMG_WHO_THE_HELL_CARES.mp3')
 
 		if statement == 'cant_go_out':
 			play_sound(funny_sounds_path, 'you_cant_go_out_there.mp3')
 
 		if statement == 'morning':
-			path = funny_sounds_path + '/morning/'
+			if self.personality == 'chaos':
+				play_sound(funny_sounds_path, random.choice(['you_like_popsickles.mp3']))
+			path = funny_sounds_path + 'morning/'
 			play_sound(path, self.choose_from_dir(path, '.mp3'))
 			self.speaker.talk('And a Good Morning from me too!')
 
 		if statement == 'trump':
-			path = funny_sounds_path + '/trump/'
+			path = funny_sounds_path + 'trump/'
 			play_sound(path, self.choose_from_dir(path, '.mp3'))
 
 		if statement == 'back_to_you':
-			play_sound(funny_sounds_path, 'back_to_you_frs.mp3')
+			if self.personality == 'chaos':
+				play_sound(funny_sounds_path, random.choice(['back_to_you_frs.mp3', 'for_real_times.mp3', 'thank_you.mp3']))
+			else:
+				play_sound(funny_sounds_path, 'back_to_you_frs.mp3')
 
 		if statement == 'dont_have_the_power':
 			play_sound(funny_sounds_path, 'dont_have_the_power.mp3')
@@ -259,19 +276,20 @@ class Alarmpi:
 
 		if self.news_enabled and self.response['news']:
 
-			for category, enabled in self.news_categories.items():
-				if enabled:
-					try:
-						self.speaker.talk('%s the top %s.' % (random.choice([
-							'And now for', "Let's have a look at", 'Now reading']), category))
-						headlines = self.news_reader.get_news(category)
-						self.news_loop(headlines)
-						if Chances().one_in_twenty():
-							self.funny_quotes('back_to_you')
-					except:
-						self.speaker.talk(could_not_obtain('news', self.owner))
+			active = [cat for cat, enabled in self.news_categories.items() if enabled]
+			active += [f'{q} news' for q in self.search_queries]
 
-			if Chances().one_in_twenty():
+			for category in active:
+				try:
+					self.speaker.talk(pick(NEWS_INTROS[self.personality], category=category))
+					headlines = self.news_reader.get_news(category)
+					self.news_loop(headlines)
+					if Chances().one_in(self._odds['back_to_you']):
+						self.funny_quotes('back_to_you')
+				except:
+					self.speaker.talk(could_not_obtain('news', self.owner, self._odds['error']))
+
+			if Chances().one_in(self._odds['nobody_cares']):
 				self.funny_quotes('nobody-cares')
 
 	def news_loop(self, headlines):
@@ -282,9 +300,9 @@ class Alarmpi:
 					self.speaker.talk(headline)
 					self.news_reader.seen_headlines.append(headline)
 					if 'trump' in headline.lower():
-						if Chances().one_in_five():
+						if Chances().one_in(self._odds['trump']):
 							self.funny_quotes('trump')
-					time.sleep(4*random.random())
+					time.sleep(2*random.random())
 			except:
 				continue
 
@@ -292,7 +310,7 @@ class Alarmpi:
 
 		try:
 			self.speaker.talk(self.greeting.bye)
-			time.sleep(4*random.random())
+			time.sleep(2*random.random())
 		except:
 			self.speaker.talk('Bye %s' % random.choice([self.owner, 'now', 'bye']))
 

@@ -48,11 +48,17 @@ class Chances:
 								False, False, False, False, False,
 								False, False, False, False, False])
 
-def could_not_obtain(statement, owner):
+	def one_in(self, n):
+		"""Return True with probability 1/n. Returns False if n is 0 (disabled)."""
+		if n == 0:
+			return False
+		return random.randint(1, n) == 1
+
+def could_not_obtain(statement, owner, sound_n=5):
 
     # --- when certain information can't be obtained ---
 
-    if Chances().one_in_five():
+    if Chances().one_in(sound_n):
 
         play_sound(os.path.join(os.path.dirname(__file__), '..', 'sounds', 'funny') + '/', 'dont_have_the_power.mp3')
 

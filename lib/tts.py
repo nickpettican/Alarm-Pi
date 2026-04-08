@@ -33,8 +33,6 @@ import subprocess
 import sys
 import tempfile
 
-import pygame
-
 
 class Speaker:
 
@@ -75,11 +73,7 @@ class Speaker:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            pygame.mixer.init()
-            pygame.mixer.music.load(tmp_path)
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():
-                continue
+            subprocess.run(['aplay', tmp_path], check=True)
         finally:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)

@@ -23,34 +23,73 @@
 
 import requests
 import xml.etree.ElementTree as ET
+from urllib.parse import quote_plus
 
 MAX_HEADLINES = 10
+
+# Google News RSS topic URLs (global editions)
+# Topic IDs may change; verify at news.google.com if feeds stop returning results
+_TOPIC_URLS = {
+    'world news':   'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx1YlY4U0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'health news':  'https://news.google.com/rss/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JXVnVMVWRDS0FBUAE',
+    'tech news':    'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGRqTVhZU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'science news': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFp0Y1RjU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+}
+
+# Country code → (language, Google country code) for local editions
+# Google News local edition URL format:
+#   https://news.google.com/rss?hl={lang}-{GL}&gl={GL}&ceid={GL}:{lang}
+_COUNTRY_LANG = {
+    'UK': ('en', 'GB'), 'GB': ('en', 'GB'),
+    'US': ('en', 'US'), 'AU': ('en', 'AU'),
+    'CA': ('en', 'CA'), 'IN': ('en', 'IN'),
+    'IE': ('en', 'IE'), 'NZ': ('en', 'NZ'),
+    'ZA': ('en', 'ZA'), 'SG': ('en', 'SG'),
+    'FR': ('fr', 'FR'), 'DE': ('de', 'DE'),
+    'ES': ('es', 'ES'), 'IT': ('it', 'IT'),
+    'PT': ('pt', 'PT'), 'BR': ('pt', 'BR'),
+    'MX': ('es', 'MX'), 'AR': ('es', 'AR'),
+    'JP': ('ja', 'JP'), 'CN': ('zh', 'CN'),
+    'KR': ('ko', 'KR'), 'RU': ('ru', 'RU'),
+    'PL': ('pl', 'PL'), 'NL': ('nl', 'NL'),
+    'SE': ('sv', 'SE'), 'NO': ('no', 'NO'),
+}
+
+
+def _local_news_url(country_code):
+    lang, gl = _COUNTRY_LANG.get(country_code.upper(), ('en', country_code.upper()))
+    return f'https://news.google.com/rss?hl={lang}-{gl}&gl={gl}&ceid={gl}:{lang}'
 
 
 class News:
 
-    def __init__(self, country_code):
+    def __init__(self, country_code=None, search_queries=None):
 
         self.client = requests.Session()
         self.client.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            )
         })
 
-        self.urls = {
-            'world news':        'https://news.google.com/rss',
-            'country news':      f'https://news.google.com/rss?ned={country_code}',
-            'medical news':      f'https://news.google.com/rss?ned={country_code}&topic=m',
-            'technological news': f'https://news.google.com/rss?ned={country_code}&topic=t',
-            'scientific news':   f'https://news.google.com/rss?ned={country_code}&topic=snc',
-        }
+        self.urls = dict(_TOPIC_URLS)
+
+        if country_code:
+            self.urls['local news'] = _local_news_url(country_code)
+
+        for query in (search_queries or []):
+            self.urls[f'{query} news'] = f'https://news.google.com/rss?q={quote_plus(query)}'
+
         self.seen_headlines = []
 
     def get_news(self, category):
 
         try:
-            response = self.client.get(self.urls[category])
+            response = self.client.get(self.urls[category], timeout=10)
+            response.raise_for_status()
             return self.parse_headlines(response.content)
-        except:
+        except Exception:
             return []
 
     def parse_headlines(self, content):
@@ -65,7 +104,7 @@ class News:
 
     def format_headline(self, raw):
 
-        # "Headline text - Source Name" -> "Source Name says: Headline text."
+        # "Headline text - Source Name" → "Source Name says: Headline text."
         headline, sep, source = raw.rpartition(' - ')
         if sep and source:
             return f"{source.strip()} says: {headline.strip()}."

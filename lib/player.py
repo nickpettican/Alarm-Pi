@@ -21,7 +21,7 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-import arrow, pygame
+import arrow, subprocess, sys, os
 
 def choose_tune(path):
 
@@ -49,8 +49,12 @@ def play_sound(path, sound):
 
 	# --- plays the song / tune ---
 
-	pygame.mixer.init()
-	pygame.mixer.music.load(path + sound)
-	pygame.mixer.music.play()
-	while pygame.mixer.music.get_busy() == True:
-		continue
+	filepath = path + sound
+	if sys.platform == 'darwin':
+		subprocess.run(['afplay', filepath], check=True)
+	else:
+		ext = os.path.splitext(filepath)[1].lower()
+		if ext == '.mp3':
+			subprocess.run(['mpg123', '-q', filepath], check=True)
+		else:
+			subprocess.run(['aplay', filepath], check=True)

@@ -21,16 +21,42 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-import itertools, random, time, arrow
+import random, arrow
+from lib.personality import MORNING_GREETINGS, TIME_OF_DAY, DAY_SPECIAL, GOODBYE, pick
+
+_QUOTE_INTROS = {
+	'serious': [
+		'The quote for today is.',
+		'A thought for today:',
+		'Your morning reading:',
+	],
+	'cheeky': [
+		"Here's something to ponder while you struggle to feel human.",
+		'Your daily dose of unsolicited wisdom:',
+		'And a quote, because why not:',
+		"Wise words incoming. Try to look impressed.",
+		"Someone once said, and I quote:",
+	],
+	'bubbly': [
+		"It's time for your morning phrase!",
+		'The quote for today is.',
+		'Quote for the day!',
+		"Let's get up on a good mood!",
+		"I'm feeling happy today!",
+		'Wanna know something?',
+	],
+}
+_QUOTE_INTROS['chaos'] = _QUOTE_INTROS['cheeky'] + _QUOTE_INTROS['bubbly']
 
 class Greeting:
 
 	# --- generates hello and goodbye greetings ---
 
-	def __init__(self, owner, app_dir):
+	def __init__(self, owner, app_dir, personality='bubbly'):
 
 		self.owner = owner
 		self.app_dir = app_dir
+		self.personality = personality
 		self.time_in_day = {'morning': False,
 					'afternoon': False,
 					'evening': False,
@@ -44,10 +70,10 @@ class Greeting:
 
 		try:
 			with open(self.app_dir + '/lib/morning_quotes.csv') as f:
-				self.quotes = [line for line in f]
-		except:
+				self.quotes = [line.strip() for line in f if line.strip()]
+		except Exception as e:
 			self.quotes = False
-			print('\nERROR while importing quotes!\n')
+			print(f'\nERROR while importing quotes: {e}\n')
 
 	def generate_greeting(self):
 
@@ -60,41 +86,25 @@ class Greeting:
 
 				if part == 'morning':
 
-					greet = list(itertools.product(
-							['Good morning,', 'Buenos dias,', 'Rise and shine,', 'Up you get,', 'Cock-a-doodle-do,',
-							'The early bird catches the worm, as they say,'],
-							[self.owner, self.owner, 'sleepy-head.', 'boss.', 'compadre.', 'fella.']))
+					greet = MORNING_GREETINGS[self.personality]
+					self.statement = ' '.join(random.choice(greet)).format(owner=self.owner)
 
 					if self.quotes:
-						quote = list(itertools.product(
-								["It's time for your morning phrase.", 'The quote for today is.', 'Quote for the day.',
-				 				"Let's get up on a good mood.", "I'm feeling happy today.", 'Wanna know something?'],
-								self.quotes))
-
-						self.quote = ' '.join(random.choice(quote))
-
-					self.statement = ' '.join(random.choice(greet))
-					break
+						intro = random.choice(_QUOTE_INTROS[self.personality])
+						self.quote = f"{intro} {random.choice(self.quotes)}"
 
 				else:
 
-					self.statement = 'Good %s %s' % (part, random.choice(['sir', self.owner]))
-					break
+					tod = TIME_OF_DAY[self.personality]
+					self.statement = ' '.join(random.choice(tod)).format(owner=self.owner, part=part)
+
+				break
 
 		if not self.statement:
 
 			self.statement = "I don't know what part of the day it is... But I know it's %s%s" % (self.now.format('HH:mm'), self.now.format('a'))
 
-		bye = list(itertools.product(
-				["Well. That's all the info from me today %s." % self.owner, "And there you go %s. Your daily dose of awesome information." % self.owner,
-				 "I'm such a clever not aren't I? Well %s." % self.owner, "I don't know about you. But I found that very interesting. Then again, I find everything interesting!",
-				 "And now you're well informed!", "I feel so informed already! Just kidding, I'm just a bot, huh hah hah!"],
-				["Have a%s day %s." % (random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), random.choice(['boss', 'sir', 'dude', 'smarty pants'])),
-				 "I hope you have a%s day %s." % (random.choice(['n amazing', ' great', ' nice', ' fantastic', 'n awesome']), random.choice(['boss', 'sir', 'dude', 'smarty pants'])),
-				 "I have a%s feeling about today." % random.choice(['n amazing', ' great', ' good', ' fantastic', 'n awesome'])],
-				['Bye now!', 'TTFN, ta-ta for now.', 'Good bye!', 'See you later', 'Cheers!']))
-
-		self.bye = ' '.join(random.choice(bye))
+		self.bye = pick(GOODBYE[self.personality], owner=self.owner)
 
 	def get_day(self):
 
@@ -125,9 +135,7 @@ class Greeting:
 
 		self.day_special = False
 
-		if 'friday' in self.now.format('dddd').lower():
-			self.day_special = "I love Fridays. Last day of the week, you must have been looking forward to it! Just one more day for the weekend."
-		if 'saturday' in self.now.format('dddd').lower():
-			self.day_special = "Finally, it's the weekend. Time to chill and do something productive; or do something exciting!"
-		if 'sunday' in self.now.format('dddd').lower():
-			self.day_special = "I love Sundays. A good day to just relax, do some coding, or read a book... And look forward to a new week!"
+		day_name = self.now.format('dddd').lower()
+		pool = DAY_SPECIAL[self.personality].get(day_name)
+		if pool:
+			self.day_special = pick(pool, owner=self.owner)

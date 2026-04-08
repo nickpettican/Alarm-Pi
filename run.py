@@ -34,17 +34,19 @@ Alarmpi(owner = 'your name/nickname',               # name by which it will gree
         tune = True or False,                       # enable or disable alarm tune
         piper_executable = '/path/to/piper',        # path to Piper binary (Linux only; ignored on macOS)
         piper_model = '/path/to/model.onnx',        # path to Piper ONNX voice model (Linux only)
+        personality = 'bubbly',                     # serious | cheeky | bubbly | chaos
         weather_enabled = True or False,            # turn weather forecasting on / off
             city='London',                          # Your city name (used for geocoding if lat/lon not given)
             country_code='uk',                      # Your country 2 character code
             latitude=51.5,                          # (optional) latitude — skips geocoding API if provided
             longitude=-0.12,                        # (optional) longitude — skips geocoding API if provided
         news_enabled = True or False,               # turn news telling on / off
-            world_news = True or False,             # enable / disable world news
-            uk_news = True or False,                # enable / disable UK news
-            health_news = True or False,            # enable / disable UK medical news
-            tech_news = True or False,              # enable / disable UK tech news
-            science_news = True or False)           # enable / disable UK science news
+            world_news = True or False,             # enable / disable world news (global topics)
+            local_news = True or False,             # enable / disable local edition (uses country_code)
+            health_news = True or False,            # enable / disable health news
+            tech_news = True or False,              # enable / disable technology news
+            science_news = True or False,           # enable / disable science news
+            search_queries = ['formula 1'])         # (optional) list of custom search terms
 
 '''
 
@@ -59,15 +61,19 @@ def main():
                         tune = False,
                         piper_executable = '/path/to/piper',
                         piper_model      = '/path/to/model.onnx',
+                        personality      = 'bubbly',
                         weather_enabled  = True,
-                        city='London',
+                        # city='London',
+                        latitude=51.531034,
+                        longitude=-0.154686,
                         country_code='uk',
                         news_enabled = False,
                             world_news = False,
-                            country_news = True,
+                            local_news = True,
                             health_news = True,
                             tech_news = True,
-                            science_news = False)
+                            science_news = False,
+                            search_queries = [])
     
     if alarmpi.tune:
         alarmpi.alarm_sound()

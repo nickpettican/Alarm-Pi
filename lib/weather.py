@@ -22,6 +22,7 @@
 # ___    permissions and limitations under the License. ___
 
 import requests, random, itertools, arrow
+from lib.personality import WEATHER_NOW_INTROS, WEATHER_LATER_INTROS, WEATHER_SAME_AS_NOW, WEATHER_CONDITIONS, pick
 
 # WMO weather code descriptions
 WMO_DESCRIPTIONS = {
@@ -63,12 +64,13 @@ FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
 
 class Weather:
 
-    def __init__(self, owner, city=None, country_code=None, latitude=None, longitude=None):
+    def __init__(self, owner, city=None, country_code=None, latitude=None, longitude=None, personality='bubbly'):
 
         # --- start Weather forecast ---
 
         self.owner = owner
         self.city  = city if city else 'your area'
+        self.personality = personality
         self.client = requests.Session()
         self.sun = None  # populated only if get_sun_rise_set() is called explicitly
 
@@ -240,61 +242,63 @@ class Weather:
         self.temperature = "It's %s %s %s. %s. %s wear %s, and %s." % (
             state, location, when, temperature, what_to_do, clothes, advice)
 
+    def _wmo_to_cond_key(self, wmo_code):
+
+        if wmo_code in (96, 99):
+            return 'hail'
+        elif wmo_code == 95:
+            return 'thunderstorm'
+        elif wmo_code in (85, 86):
+            return 'snow_showers'
+        elif wmo_code in (71, 73, 75, 77):
+            return 'snow'
+        elif wmo_code in (61, 63, 65, 80, 81, 82):
+            return 'rain'
+        elif wmo_code in (51, 53, 55):
+            return 'drizzle'
+        elif wmo_code in (45, 48):
+            return 'fog'
+        elif wmo_code == 0:
+            return 'clear'
+        else:
+            return 'clouds'
+
     def get_condition(self, wmo_code, condition_desc, when):
 
         # --- generates random statements to describe the weather conditions ---
 
+        # track rain for current conditions
+        if when == 'now' and wmo_code in (61, 63, 65, 80, 81, 82):
+            self.rain_today = True
+
         if when == 'now':
-            intro = random.choice(['Forecast shows', 'I foresee', 'Data shows', 'Looks like we have', 'We have'])
+            intro = pick(WEATHER_NOW_INTROS[self.personality])
 
         elif when == 'later':
-            intro = random.choice(['And later on, it shows ', 'And further on, I foresee ', 'And later, data shows ', 'And later we have '])
             if wmo_code == self.info['wmo_code']:
-                return random.choice(['And looks like it will be like this for the rest of the day.', 'And the rest of the day should be the same.'])
-            return intro + condition_desc
+                return pick(WEATHER_SAME_AS_NOW[self.personality])
+            intro = pick(WEATHER_LATER_INTROS[self.personality])
 
         else:
             return 'Something went wrong in the "get condition function".'
 
-        if wmo_code >= 96:
-            comment = random.choice(['Ouch, watch your head.', "Don't get hit by one", "It doesn't usually last long"])
-            advice  = random.choice(['Be careful', 'Good luck out there', 'Be cautious'])
+        cond_key = self._wmo_to_cond_key(wmo_code)
 
-        elif wmo_code == 95:
-            comment = random.choice(['Scary! Although I kinda like it', 'Are you scared?', 'Oh My God', "I'm so scared %s" % self.owner, 'Bazinga'])
-            advice  = random.choice(['Be careful out there', "Don't get struck by lightning", 'Good luck out there'])
+        if self.personality == 'serious':
+            result = f"{intro} {condition_desc}."
+        else:
+            pool = WEATHER_CONDITIONS[self.personality].get(cond_key, [])
+            if pool:
+                comment, advice = random.choice(pool)
+                comment = comment.format(owner=self.owner, city=self.city)
+                advice  = advice.format(owner=self.owner, city=self.city)
+                result  = f"{intro} {condition_desc}. {comment} {advice}"
+            else:
+                result = f"{intro} {condition_desc}."
 
-        elif wmo_code in (85, 86):
-            comment = random.choice(['Not the nicest of weather conditions..', "I don't mind snow, but I do mind this", "Let's hope it gets better", "Let's not let this get in the way of an awesome day"])
-            advice  = random.choice(['Take your umbrella', 'Use your umbrella today', 'Layer up out there'])
-
-        elif wmo_code in (71, 73, 75, 77):
-            comment = random.choice(['Snow snow snow, I love snow; can you tell?', 'Snow day, oh yeah', 'Frosty the snowman, was a holly, jolly, soul; he would talk like me, and say hello, until I ate his nose'])
-            advice  = random.choice(['Can I be cheesy and ask to build a snowman?', 'Does this mean I can skip work?', 'Fun times are ahead!'])
-
-        elif wmo_code in (61, 63, 65, 80, 81, 82):
-            self.rain_today = True
-            comment = random.choice(["Darn it, rain really fries my circuits", "Well, just another rainy day", "Yikes, wish it was sunny."])
-            advice  = random.choice(["Don't forget your umbrella", "Cover up and take your umbrella", "Take your umbrella %s" % self.owner])
-
-        elif wmo_code in (51, 53, 55):
-            comment = random.choice(["Well let's enjoy the day regardless", "Rain rain go away, come again another day", "Let's hope it gets better", "It could be worse"])
-            advice  = random.choice(["Don't forget your umbrella", "Take your umbrella %s, don't forget" % self.owner, 'Take your umbrella just in case'])
-
-        elif wmo_code in (45, 48):
-            comment = random.choice(["At least it's not raining", "Well, it could be better", "Kinda creepy weather condition"])
-            advice  = random.choice(["I can't see anything %s" % self.owner, "Unless you're driving you'll be fine.", "Try not to walk into a lamp-post"])
-
-        elif wmo_code == 0:
-            comment = random.choice(["I love standing under the stars... before you say anything, don't forget: the Sun is a star", "Yay, Sunshine", 'Good morning Sunshine, the Earth says...: hello', 'Loving life'])
-            advice  = random.choice(['Although clear skies sometimes makes it colder...', 'Absence of clouds makes me happy', "It's just as clear as my source code: wink wink", "Let's enjoy it"])
-
-        else:  # 1, 2, 3 (mainly clear / partly cloudy / overcast)
-            comment = random.choice(['Just another cloudy day in %s' % self.city, "Come out Sun. Where are you?", "At least it's not raining", "Grey... grim...: that is all."])
-            advice  = random.choice(['Be positive though', "It's okay", 'Every cloud has a silver lining'])
-
-        self.condition = "%s %s. %s. %s." % (intro, condition_desc, comment, advice)
-        return self.condition
+        if when == 'now':
+            self.condition = result
+        return result
 
     def get_wind(self):
 
