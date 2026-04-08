@@ -21,14 +21,65 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-# NOTE: pyvona (Python 2 / Ivona API) has been removed.
-# Replace this stub with your chosen TTS engine (e.g. pyttsx3, Coqui TTS).
+# TTS backends:
+#   Linux (Raspberry Pi) — Piper TTS binary + ONNX voice model
+#   macOS               — built-in `say` command (for local testing)
+#
+# Piper: https://github.com/rhasspy/piper
+# Choose and download a voice model from https://huggingface.co/rhasspy/piper-voices
+
+import os
+import subprocess
+import sys
+import tempfile
+
+import pygame
+
 
 class Speaker:
 
-    def __init__(self, voice='Salli'):
-        self.voice = voice
-        print(f'TTS stub initialised (voice: {voice}). Replace lib/tts.py with your TTS engine.')
+    def __init__(self, piper_executable, piper_model):
+        self.platform = 'macos' if sys.platform == 'darwin' else 'linux'
+
+        if self.platform == 'linux':
+            if not piper_executable or not piper_model:
+                raise ValueError(
+                    'piper_executable and piper_model are required on Linux. '
+                    'See https://github.com/rhasspy/piper for setup instructions.'
+                )
+            if not os.path.isfile(piper_model):
+                raise FileNotFoundError(f'Piper model not found: {piper_model}')
+            self.piper_executable = piper_executable
+            self.piper_model      = piper_model
 
     def talk(self, text):
         print(text)
+        try:
+            if self.platform == 'macos':
+                subprocess.run(['say', text], check=True)
+            else:
+                self._piper(text)
+        except Exception as e:
+            print(f'TTS error: {e}')
+
+    def _piper(self, text):
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.wav')
+        os.close(tmp_fd)
+        try:
+            subprocess.run(
+                [self.piper_executable,
+                 '--model',       self.piper_model,
+                 '--output_file', tmp_path],
+                input=text.encode(),
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            pygame.mixer.init()
+            pygame.mixer.music.load(tmp_path)
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                continue
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)

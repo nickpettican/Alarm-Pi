@@ -32,8 +32,8 @@ Explanation:
 
 Alarmpi(owner = 'your name/nickname',               # name by which it will greet you
         tune = True or False,                       # enable or disable alarm tune
-        voice_female = True or False or name,       # make the voice female or give specific name
-        voice_male = True or False or name,         # make the voice male or give specific name
+        piper_executable = '/path/to/piper',        # path to Piper binary (Linux only; ignored on macOS)
+        piper_model = '/path/to/model.onnx',        # path to Piper ONNX voice model (Linux only)
         weather_enabled = True or False,            # turn weather forecasting on / off
             city='London',                          # Your city name (used for geocoding if lat/lon not given)
             country_code='uk',                      # Your country 2 character code
@@ -57,9 +57,9 @@ def main():
     alarmpi = Alarmpi(  owner = 'Your name',
                         app_dir = app_directory,
                         tune = False,
-                        voice_female = True,
-                        voice_male = False,
-                        weather_enabled = True,
+                        piper_executable = '/path/to/piper',
+                        piper_model      = '/path/to/model.onnx',
+                        weather_enabled  = True,
                         city='London',
                         country_code='uk',
                         news_enabled = False,

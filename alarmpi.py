@@ -35,8 +35,8 @@ class Alarmpi:
 				owner,
 				app_dir,
 				tune,
-				voice_female,
-				voice_male,
+				piper_executable,
+				piper_model,
 				weather_enabled,
 				city=None,
 				country_code=None,
@@ -64,25 +64,16 @@ class Alarmpi:
 			'scientific news':   science_news,
 		}
 		self.greeting = Greeting(owner=self.owner, app_dir=self.pwd)
-		self._init_speaker(voice_female, voice_male)
+		self._init_speaker(piper_executable, piper_model)
 		self._init_weather(city, country_code, latitude, longitude)
 		self._init_news(country_code)
 
-	def _init_speaker(self, voice_female, voice_male):
+	def _init_speaker(self, piper_executable, piper_model):
 
 		try:
-			if voice_female != voice_male:
-				if voice_female:
-					voice = voice_female if type(voice_female) == str else 'Salli'
-				elif voice_male:
-					voice = voice_male if type(voice_male) == str else 'Brian'
-			else:
-				print('ERROR, the voice has to be either male or female!')
-				exit()
-
-			self.speaker = Speaker(voice=voice)
-		except:
-			print('ERROR while creating voice!')
+			self.speaker = Speaker(piper_executable=piper_executable, piper_model=piper_model)
+		except Exception as e:
+			print(f'ERROR while creating speaker: {e}')
 
 	def _init_weather(self, city, country_code, latitude=None, longitude=None):
 
