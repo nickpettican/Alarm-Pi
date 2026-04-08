@@ -38,14 +38,16 @@ class Alarmpi:
 				voice_female,
 				voice_male,
 				weather_enabled,
-				city,
-				country_code,
-				news_enabled,
-				world_news,
-				country_news,
-				health_news,
-				tech_news,
-				science_news):
+				city=None,
+				country_code=None,
+				latitude=None,
+				longitude=None,
+				news_enabled=False,
+				world_news=False,
+				country_news=False,
+				health_news=False,
+				tech_news=False,
+				science_news=False):
 
 		self.pwd = app_dir
 
@@ -63,7 +65,7 @@ class Alarmpi:
 		}
 		self.greeting = Greeting(owner=self.owner, app_dir=self.pwd)
 		self._init_speaker(voice_female, voice_male)
-		self._init_weather(city, country_code)
+		self._init_weather(city, country_code, latitude, longitude)
 		self._init_news(country_code)
 
 	def _init_speaker(self, voice_female, voice_male):
@@ -82,17 +84,19 @@ class Alarmpi:
 		except:
 			print('ERROR while creating voice!')
 
-	def _init_weather(self, city, country_code):
+	def _init_weather(self, city, country_code, latitude=None, longitude=None):
 
 		if self.weather_enabled:
 			try:
-				self.weather = Weather(owner=self.owner, city=city, country_code=country_code)
+				self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
+				                       latitude=latitude, longitude=longitude)
 				self.response['weather'] = True
 			except:
 				print('ERROR while obtaining weather info!\n')
 				time.sleep(5)
 				try:
-					self.weather = Weather(owner=self.owner, city=city, country_code=country_code)
+					self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
+					                       latitude=latitude, longitude=longitude)
 					self.response['weather'] = True
 				except:
 					self.speaker.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." % self.owner)
@@ -171,10 +175,10 @@ class Alarmpi:
 							self.speaker.talk(self.weather.future_condition)
 					else:
 						if Chances().one_in_ten():
-							condition_id = int(self.weather.info['condition_id'])
-							wind         = float(self.weather.info['wind'])
-							rain_codes   = {500, 501, 502, 520, 521, 522}
-							if condition_id in rain_codes and wind < 25.00:
+							wmo_code   = int(self.weather.info['wmo_code'])
+							wind       = float(self.weather.info['wind'])
+							rain_codes = {61, 63, 65, 80, 81, 82}
+							if wmo_code in rain_codes and wind < 25.00:
 								self.funny_quotes('rain_sideways')
 							else:
 								self.funny_quotes('rain')
@@ -203,7 +207,8 @@ class Alarmpi:
 				# --- astrology ---
 
 				try:
-					self.speaker.talk(self.weather.sun)
+					if self.weather.sun:
+						self.speaker.talk(self.weather.sun)
 				except:
 					self.speaker.talk(could_not_obtain('astrology', self.owner))
 
