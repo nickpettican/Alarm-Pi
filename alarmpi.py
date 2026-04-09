@@ -32,291 +32,342 @@ from lib.personality import SOUND_ODDS, NEWS_INTROS, pick
 
 class Alarmpi:
 
-	def __init__(self,
-				owner,
-				app_dir,
-				tune,
-				piper_executable,
-				piper_model,
-				weather_enabled,
-				city=None,
-				country_code=None,
-				latitude=None,
-				longitude=None,
-				news_enabled=False,
-				world_news=False,
-				local_news=False,
-				health_news=False,
-				tech_news=False,
-				science_news=False,
-				search_queries=None,
-				personality='bubbly'):
+    def __init__(self,
+                owner,
+                app_dir,
+                tune,
+                piper_executable,
+                piper_model,
+                weather_enabled,
+                city=None,
+                country_code=None,
+                latitude=None,
+                longitude=None,
+                news_enabled=False,
+                world_news=False,
+                local_news=False,
+                health_news=False,
+                tech_news=False,
+                science_news=False,
+                search_queries=None,
+                personality='bubbly'):
 
-		self.pwd = app_dir
+        self.pwd = app_dir
 
-		self.response = {'weather': False, 'news': False}
-		self.owner           = owner
-		self.tune            = tune
-		self.weather_enabled = weather_enabled
-		self.news_enabled    = news_enabled
-		self.personality     = personality if personality in SOUND_ODDS else 'bubbly'
-		self._odds           = SOUND_ODDS[self.personality]
-		self.news_categories = {
-			'world news':  world_news,
-			'local news':  local_news,
-			'health news': health_news,
-			'tech news':   tech_news,
-			'science news': science_news,
-		}
-		self.search_queries = search_queries or []
-		self.greeting = Greeting(owner=self.owner, app_dir=self.pwd, personality=self.personality)
-		self._init_speaker(piper_executable, piper_model)
-		self._init_weather(city, country_code, latitude, longitude)
-		self._init_news(country_code)
+        self.response = {'weather': False, 'news': False}
+        self.owner           = owner
+        self.tune            = tune
+        self.weather_enabled = weather_enabled
+        self.news_enabled    = news_enabled
+        self.personality     = personality if personality in SOUND_ODDS else 'bubbly'
+        self._odds           = SOUND_ODDS[self.personality]
+        self.news_categories = {
+            'world_news':  world_news,
+            'local_news':  local_news,
+            'health_news': health_news,
+            'tech_news':   tech_news,
+            'science_news': science_news,
+        }
+        self.search_queries = search_queries or []
+        self.greeting = Greeting(owner=self.owner, app_dir=self.pwd, personality=self.personality)
+        self._init_speaker(piper_executable, piper_model)
+        self._init_weather(city, country_code, latitude, longitude)
+        self._init_news(country_code)
 
-	def _init_speaker(self, piper_executable, piper_model):
+    def _init_speaker(self, piper_executable, piper_model):
 
-		try:
-			self.speaker = Speaker(piper_executable=piper_executable, piper_model=piper_model)
-		except Exception as e:
-			print(f'ERROR while creating speaker: {e}')
+        try:
+            self.speaker = Speaker(piper_executable=piper_executable, piper_model=piper_model)
+        except Exception as e:
+            print(f'ERROR while creating speaker: {e}')
 
-	def _init_weather(self, city, country_code, latitude=None, longitude=None):
+    def _init_weather(self, city, country_code, latitude=None, longitude=None):
 
-		if self.weather_enabled:
-			try:
-				self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
-				                       latitude=latitude, longitude=longitude, personality=self.personality)
-				self.response['weather'] = True
-			except Exception as e:
-				print(f'ERROR while obtaining weather info: {e}\n')
-				time.sleep(1)
-				try:
-					self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
-					                       latitude=latitude, longitude=longitude, personality=self.personality)
-					self.response['weather'] = True
-				except:
-					self.speaker.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." % self.owner)
+        if self.weather_enabled:
+            try:
+                self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
+                                       latitude=latitude, longitude=longitude, personality=self.personality)
+                self.response['weather'] = True
+            except Exception as e:
+                print(f'ERROR while obtaining weather info: {e}\n')
+                time.sleep(1)
+                try:
+                    self.weather = Weather(owner=self.owner, city=city, country_code=country_code,
+                                           latitude=latitude, longitude=longitude, personality=self.personality)
+                    self.response['weather'] = True
+                except:
+                    self.speaker.talk("Sorry %s, I couldn't get the weather module started. Check you entered the correct data." % self.owner)
 
-	def _init_news(self, country_code):
+    def _init_news(self, country_code):
 
-		try:
-			self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
-			self.response['news'] = True
-		except Exception as e:
-			print(f'ERROR while starting Google News: {e}\n')
-			time.sleep(1)
-			try:
-				self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
-				self.response['news'] = True
-			except:
-				self.speaker.talk("Sorry %s, I couldn't get the news module started." % self.owner)
+        try:
+            if not self.news_enabled:
+                return
 
-	def alarm_sound(self):
+            self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
+            self.response['news'] = True
+        except Exception as e:
+            print(f'ERROR while starting Google News: {e}\n')
+            time.sleep(1)
+            try:
+                self.news_reader = News(country_code=country_code, search_queries=self.search_queries)
+                self.response['news'] = True
+            except:
+                self.speaker.talk("Sorry %s, I couldn't get the news module started." % self.owner)
 
-		try:
-			print('Choosing tune... ', end='')
-			tunes_dir = choose_tune(self.pwd)
+    def alarm_sound(self):
 
-			print('playing... ', end='')
-			play_sound(tunes_dir, self.choose_from_dir(tunes_dir, '.mp3'))
+        try:
+            print('Choosing tune... ', end='')
+            tunes_dir = choose_tune(self.pwd)
 
-			print('DONE!\n')
-		except:
-			print('ERROR while playing tune!\n')
+            print('playing... ', end='')
+            play_sound(tunes_dir, self.choose_from_dir(tunes_dir, '.mp3'))
 
-	def morning_greeting(self):
+            print('DONE!\n')
+        except:
+            print('ERROR while playing tune!\n')
 
-		try:
-			if not Chances().one_in(self._odds['morning']):
-				self.speaker.talk(self.greeting.statement)
-			else:
-				self.funny_quotes('morning')
-			time.sleep(2*random.random())
+    def morning_greeting(self):
 
-			if self.greeting.quote:
-				self.speaker.talk(self.greeting.quote)
-				time.sleep(2*random.random())
+        try:
+            if not Chances().one_in(self._odds['morning']):
+                self.speaker.talk(self.greeting.statement)
+            else:
+                self.funny_quotes('morning')
+            time.sleep(2*random.random())
 
-			self.speaker.talk(self.greeting.date_today)
-			time.sleep(2*random.random())
+            if self.greeting.quote:
+                self.speaker.talk(self.greeting.quote)
+                time.sleep(2*random.random())
 
-			if self.greeting.day_special:
-				self.speaker.talk(self.greeting.day_special)
-				time.sleep(2*random.random())
+            self.speaker.talk(self.greeting.date_today)
+            time.sleep(2*random.random())
 
-		except:
-			self.speaker.talk('Good morning %s!' % self.owner)
+            if self.greeting.day_special:
+                self.speaker.talk(self.greeting.day_special)
+                time.sleep(2*random.random())
 
-	def weather_forecast(self):
+        except:
+            self.speaker.talk('Good morning %s!' % self.owner)
 
-		if self.weather_enabled and self.response['weather']:
+    def weather_forecast(self):
 
-			try:
+        if self.weather_enabled and self.response['weather']:
 
-				# --- temperature ---
+            try:
 
-				try:
-					self.speaker.talk(self.weather.temperature)
-				except:
-					self.speaker.talk(could_not_obtain('temperature', self.owner))
+                # --- temperature ---
 
-				time.sleep(3*random.random())
+                try:
+                    self.speaker.talk(self.weather.temperature)
+                except:
+                    self.speaker.talk(could_not_obtain('temperature', self.owner, self._odds['error'], self.personality))
 
-				# --- condition ---
+                time.sleep(3*random.random())
 
-				try:
-					if not self.weather.rain_today:
-						self.speaker.talk(self.weather.condition)
-						if self.weather.future_forecast:
-							self.speaker.talk(self.weather.future_condition)
-					else:
-						if Chances().one_in(self._odds['rain']):
-							wmo_code   = int(self.weather.info['wmo_code'])
-							wind       = float(self.weather.info['wind'])
-							rain_codes = {61, 63, 65, 80, 81, 82}
-							if wmo_code in rain_codes and wind < 25.00:
-								self.funny_quotes('rain_sideways')
-							else:
-								self.funny_quotes('rain')
-						else:
-							self.speaker.talk(self.weather.condition)
-							if self.weather.future_forecast:
-								self.speaker.talk(self.weather.future_condition)
-				except:
-					self.speaker.talk(could_not_obtain('weather condition', self.owner, self._odds['error']))
+                # --- humidity ---
 
-				if Chances().one_in(self._odds['cant_go_out']):
-					self.funny_quotes('cant_go_out')
+                try:
+                    if self.weather.humidity:
+                        self.speaker.talk(self.weather.humidity)
+                except:
+                    self.speaker.talk(could_not_obtain('humidity', self.owner, self._odds['error'], self.personality))
 
-				time.sleep(3*random.random())
+                time.sleep(3*random.random())
 
-				# --- wind ---
+                # --- condition ---
 
-				try:
-					if self.weather.wind:
-						self.speaker.talk(self.weather.wind)
-				except:
-					self.speaker.talk(could_not_obtain('wind', self.owner, self._odds['error']))
+                try:
+                    if self.weather.rain_today:
+                        # Ollie Williams covers today — fall back to condition text if roll doesn't fire.
+                        if Chances().one_in(self._odds['weather']):
+                            wind = float(self.weather.info['wind'])
+                            if wind < 25.00:
+                                self.funny_quotes('rain_sideways')
+                            else:
+                                self.funny_quotes('rain')
+                        else:
+                            self.speaker.talk(self.weather.condition)
+                        # Always follow up with tomorrow's forecast regardless.
+                        if self.weather.future_forecast:
+                            self.speaker.talk(self.weather.future_condition)
+                    else:
+                        # Always speak the condition, then optionally add a sunny-day clip.
+                        self.speaker.talk(self.weather.condition)
+                        if self.weather.future_forecast:
+                            self.speaker.talk(self.weather.future_condition)
+                        if self.weather.sun_today and Chances().one_in(self._odds['weather']):
+                            self.funny_quotes('very_fair')
+                except:
+                    self.speaker.talk(could_not_obtain('weather condition', self.owner, self._odds['error'], self.personality))
 
-				time.sleep(3*random.random())
+                time.sleep(3*random.random())
 
-				# --- astrology ---
+                # --- wind ---
 
-				try:
-					if self.weather.sun:
-						self.speaker.talk(self.weather.sun)
-				except:
-					self.speaker.talk(could_not_obtain('astrology', self.owner))
+                try:
+                    if self.weather.wind:
+                        self.speaker.talk(self.weather.wind)
+                except:
+                    self.speaker.talk(could_not_obtain('wind', self.owner, self._odds['error'], self.personality))
 
-				time.sleep(3*random.random())
+                time.sleep(3*random.random())
 
-			except:
-				self.speaker.talk(could_not_obtain('weather', self.owner, self._odds['error']))
+                # --- air quality ---
 
-		elif self.weather_enabled and not self.response['weather']:
-			self.funny_quotes('dont_have_the_power')
-			self.speaker.talk("%s I couldn't obtain the weather. You'll have to look out of the window today %s." % (random.choice(['Looks like', "I'm afraid", 'Sorry, but']), self.owner))
+                try:
+                    if self.weather.aqi:
+                        self.speaker.talk(self.weather.aqi)
+                        aqi_val = self.weather.aqi_value
+                        if aqi_val is not None and 200 > aqi_val > 100:
+                            if Chances().one_in(self._odds['cant_go_out_aqi']):
+                                self.funny_quotes('cant_go_out')
+                        elif aqi_val is not None and aqi_val >= 200:
+                            self.funny_quotes('cant_go_out')
+                except:
+                    self.speaker.talk(could_not_obtain('air quality', self.owner, self._odds['error'], self.personality))
 
-		else:
-			print('Weather disabled.')
+                time.sleep(3*random.random())
 
-	def funny_quotes(self, statement):
+                # --- astrology ---
 
-		if self.personality == 'serious':
-			return
+                try:
+                    if self.weather.sun:
+                        self.speaker.talk(self.weather.sun)
+                except:
+                    self.speaker.talk(could_not_obtain('astrology', self.owner, self._odds['error'], self.personality))
 
-		funny_sounds_path = self.pwd + '/sounds/funny/'
+                time.sleep(3*random.random())
 
-		if 'rain' in statement:
-			self.speaker.talk(random.choice([
-				'And now for the weather. Over to you Ollie.',
-				'And now, over to Ollie Williams for the weather.',
-				"And now here's Ollie Williams with the black-you-weather forecast."]))
-			if statement == 'rain':
-				play_sound(funny_sounds_path, 'Its_Gon_Rain.mp3')
-			elif statement == 'rain_sideways':
-				play_sound(funny_sounds_path, 'raining_sideways.mp3')
-			self.speaker.talk('Thanks Olly.')
+            except:
+                self.speaker.talk(could_not_obtain('weather', self.owner, self._odds['error'], self.personality))
 
-		if statement == 'nobody-cares':
-			if self.personality == 'chaos':
-				play_sound(funny_sounds_path, random.choice(['OMG_WHO_THE_HELL_CARES.mp3', 'thats_retarded.mp3']))
-			else:
-				play_sound(funny_sounds_path, 'OMG_WHO_THE_HELL_CARES.mp3')
+        elif self.weather_enabled and not self.response['weather']:
+            self.funny_quotes('dont_have_the_power')
+            self.speaker.talk("%s I couldn't obtain the weather. You'll have to look out of the window today %s." % (random.choice(['Looks like', "I'm afraid", 'Sorry, but']), self.owner))
 
-		if statement == 'cant_go_out':
-			play_sound(funny_sounds_path, 'you_cant_go_out_there.mp3')
+        else:
+            print('Weather disabled.')
 
-		if statement == 'morning':
-			if self.personality == 'chaos':
-				play_sound(funny_sounds_path, random.choice(['you_like_popsickles.mp3']))
-			path = funny_sounds_path + 'morning/'
-			play_sound(path, self.choose_from_dir(path, '.mp3'))
-			self.speaker.talk('And a Good Morning from me too!')
+    def funny_quotes(self, statement):
 
-		if statement == 'trump':
-			path = funny_sounds_path + 'trump/'
-			play_sound(path, self.choose_from_dir(path, '.mp3'))
+        if self.personality == 'serious':
+            return
 
-		if statement == 'back_to_you':
-			if self.personality == 'chaos':
-				play_sound(funny_sounds_path, random.choice(['back_to_you_frs.mp3', 'for_real_times.mp3', 'thank_you.mp3']))
-			else:
-				play_sound(funny_sounds_path, 'back_to_you_frs.mp3')
+        funny_sounds_path = self.pwd + '/sounds/funny/'
 
-		if statement == 'dont_have_the_power':
-			play_sound(funny_sounds_path, 'dont_have_the_power.mp3')
+        if 'rain' in statement:
+            self.speaker.talk(random.choice([
+                'And now for the weather. Over to you Ollie.',
+                'And now, over to Ollie Williams for the weather.',
+                "And now here's Ollie Williams with the black-you-weather forecast."]))
+            if statement == 'rain':
+                play_sound(funny_sounds_path, 'Its_Gon_Rain.mp3')
+            elif statement == 'rain_sideways':
+                play_sound(funny_sounds_path, 'raining_sideways.mp3')
+            self.speaker.talk('Thanks Olly.')
 
-	def choose_from_dir(self, path, end):
+        if statement == 'very_fair':
+            play_sound(funny_sounds_path, 'hey-stewie-weather.mp3')
+            self.speaker.talk('Thanks Stewie.')
+   
+        if statement == 'news_intro':
+            path = funny_sounds_path + 'news_intro/'
+            play_sound(path, self.choose_from_dir(path, '.mp3'))
 
-		return random.choice([f for f in os.listdir(path) if f.endswith(end)])
+        if statement == 'nobody_cares':
+            if self.personality == 'chaos':
+                play_sound(funny_sounds_path, random.choice(['OMG_WHO_THE_HELL_CARES.mp3', 'thats_retarded.mp3']))
+            else:
+                play_sound(funny_sounds_path, 'OMG_WHO_THE_HELL_CARES.mp3')
 
-	def news_for_today(self):
+        if statement == 'cant_go_out':
+            play_sound(funny_sounds_path, 'you_cant_go_out_there.mp3')
 
-		if self.news_enabled and self.response['news']:
+        if statement == 'morning':
+            path = funny_sounds_path + 'morning/'
+            play_sound(path, self.choose_from_dir(path, '.mp3'))
+            self.speaker.talk('And a Good Morning from me too!')
 
-			active = [cat for cat, enabled in self.news_categories.items() if enabled]
-			active += [f'{q} news' for q in self.search_queries]
+        if statement == 'trump':
+            path = funny_sounds_path + 'trump/'
+            play_sound(path, self.choose_from_dir(path, '.mp3'))
+            
+        if statement == 'john_cena':
+            play_sound(funny_sounds_path, 'and-his-name-is-john-cena.mp3')
 
-			for category in active:
-				try:
-					self.speaker.talk(pick(NEWS_INTROS[self.personality], category=category))
-					headlines = self.news_reader.get_news(category)
-					self.news_loop(headlines)
-					if Chances().one_in(self._odds['back_to_you']):
-						self.funny_quotes('back_to_you')
-				except:
-					self.speaker.talk(could_not_obtain('news', self.owner, self._odds['error']))
+        if statement == 'news_end':
+            path = funny_sounds_path + 'news_ending/'
 
-			if Chances().one_in(self._odds['nobody_cares']):
-				self.funny_quotes('nobody-cares')
+            if self.personality == 'chaos':
+                play_sound(path, self.choose_from_dir(path, '.mp3'))
+            else:
+                play_sound(path, 'news-outro.mp3')
 
-	def news_loop(self, headlines):
+        if statement == 'dont_have_the_power':
+            play_sound(funny_sounds_path, 'dont_have_the_power.mp3')
 
-		for headline in headlines:
-			try:
-				if not any(headline in seen for seen in self.news_reader.seen_headlines):
-					self.speaker.talk(headline)
-					self.news_reader.seen_headlines.append(headline)
-					if 'trump' in headline.lower():
-						if Chances().one_in(self._odds['trump']):
-							self.funny_quotes('trump')
-					time.sleep(2*random.random())
-			except:
-				continue
+    def choose_from_dir(self, path, end):
 
-	def goodbye(self):
+        return random.choice([f for f in os.listdir(path) if f.endswith(end)])
 
-		try:
-			self.speaker.talk(self.greeting.bye)
-			time.sleep(2*random.random())
-		except:
-			self.speaker.talk('Bye %s' % random.choice([self.owner, 'now', 'bye']))
+    def news_for_today(self):
 
-	def main(self):
+        if self.news_enabled and self.response['news']:
 
-		self.morning_greeting()
-		self.weather_forecast()
-		self.news_for_today()
-		self.goodbye()
+            active = [cat for cat, enabled in self.news_categories.items() if enabled]
+            active += [f'{q} news' for q in self.search_queries]
+            
+            if not active:
+                active = ['world_news']
+
+            for category in active:
+                try:
+                    self.speaker.talk(pick(NEWS_INTROS[self.personality], category=category.replace('_', ' ')))
+                    headlines = self.news_reader.get_news(category)
+                    if Chances().one_in(self._odds['news_intro']):
+                        self.funny_quotes('news_intro')
+      
+                    self.news_loop(headlines)
+
+                    if Chances().one_in(self._odds['news_end']):
+                        self.funny_quotes('news_end')
+                except:
+                    self.speaker.talk(could_not_obtain('news', self.owner, self._odds['error'], self.personality))
+
+            if Chances().one_in(self._odds['nobody_cares']):
+                self.funny_quotes('nobody_cares')
+
+    def news_loop(self, headlines):
+
+        for headline in headlines:
+            try:
+                if not any(headline in seen for seen in self.news_reader.seen_headlines):
+                    self.speaker.talk(headline)
+                    self.news_reader.seen_headlines.append(headline)
+                    if 'trump' in headline.lower():
+                        if Chances().one_in(self._odds['trump']):
+                            self.funny_quotes('trump')
+
+                    if 'john cena' in headline.lower() and self.personality != 'serious':
+                        self.funny_quotes('john_cena')
+                        
+                    time.sleep(2*random.random())
+            except:
+                continue
+
+    def goodbye(self):
+
+        try:
+            self.speaker.talk(self.greeting.bye)
+            time.sleep(2*random.random())
+        except:
+            self.speaker.talk('Bye %s' % random.choice([self.owner, 'now', 'bye']))
+
+    def main(self):
+
+        self.morning_greeting()
+        self.weather_forecast()
+        self.news_for_today()
+        self.goodbye()

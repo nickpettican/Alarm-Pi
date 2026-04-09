@@ -30,10 +30,10 @@ MAX_HEADLINES = 10
 # Google News RSS topic URLs (global editions)
 # Topic IDs may change; verify at news.google.com if feeds stop returning results
 _TOPIC_URLS = {
-    'world news':   'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx1YlY4U0JXVnVMVWRDR2dKSlRpZ0FQAQ',
-    'health news':  'https://news.google.com/rss/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JXVnVMVWRDS0FBUAE',
-    'tech news':    'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGRqTVhZU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
-    'science news': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFp0Y1RjU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'world_news':   'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx1YlY4U0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'health_news':  'https://news.google.com/rss/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JXVnVMVWRDS0FBUAE',
+    'tech_news':    'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGRqTVhZU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'science_news': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFp0Y1RjU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
 }
 
 # Country code → (language, Google country code) for local editions
@@ -76,7 +76,7 @@ class News:
         self.urls = dict(_TOPIC_URLS)
 
         if country_code:
-            self.urls['local news'] = _local_news_url(country_code)
+            self.urls['local_news'] = _local_news_url(country_code)
 
         for query in (search_queries or []):
             self.urls[f'{query} news'] = f'https://news.google.com/rss?q={quote_plus(query)}'

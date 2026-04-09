@@ -60,6 +60,7 @@ _RAIN_SNOW_WMO = _RAIN_WMO | _SNOW_WMO
 
 GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
+AIR_QUALITY_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality'
 
 
 class Weather:
@@ -81,19 +82,25 @@ class Weather:
         else:
             raise ValueError("Provide either 'city' or both 'latitude' and 'longitude'.")
 
+        self._lat = lat
+        self._lon = lon
+
         response = self.get_weather_info(lat, lon)
 
         if response:
             self.info = self.sort_data(response)
         if self.info:
             self.get_temperature()
+            self.get_humidity()
             self.rain_today = False
+            self.sun_today = False
             self.condition = self.get_condition(self.info['wmo_code'],
                                                 self.info['condition_desc'], 'now')
             if self.future_forecast:
                 self.future_condition = self.get_condition(self.info['future_wmo_code'],
-                                                           self.info['future_condition_desc'], 'later')
+                                                           self.info['future_condition_desc'], 'tomorrow')
             self.get_wind()
+            self.get_air_quality(lat, lon)
 
     def geocode(self, city):
 
@@ -119,7 +126,7 @@ class Weather:
             params = {
                 'latitude': lat,
                 'longitude': lon,
-                'current': 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m',
+                'current': 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m',
                 'daily': 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset',
                 'timezone': 'auto',
                 'forecast_days': 2,
@@ -152,6 +159,7 @@ class Weather:
                 'current_temp': float(current['temperature_2m']),
                 'current_low':  float(daily['temperature_2m_min'][0]),
                 'current_high': float(daily['temperature_2m_max'][0]),
+                'humidity':     int(current.get('relative_humidity_2m', 0)),
                 'wmo_code':      wmo,
                 'condition':      WMO_TO_MAIN.get(wmo, 'Unknown'),
                 'condition_desc': WMO_DESCRIPTIONS.get(wmo, 'clear sky'),
@@ -182,7 +190,7 @@ class Weather:
         temperature = ' '.join(random.choice(options)) % (temp, high, low)
 
         if temp < 0 and high < 0:
-            state   = random.choice(['fhfuhfuh freezing', 'absolutely freezing', 'very very cold', "colder than a polar bear's butt", 'sub-zero'])
+            state   = random.choice(['fuh fuh fuh freezing', 'absolutely freezing', 'very very cold', "colder than a polar bear's butt", 'sub-zero'])
             clothes = random.choice(['your warmest clothes', 'three layers of jackets', 'plenty of clothes and gloves', 'all your wardrobe', 'at least 5 scarves'])
             advice  = random.choice(["don't you dare catch a cold", 'stay warm', "don't stay outside for too long", 'stay inside like a caveman',
                                      "of course, it's hot %s time" % random.choice(['tea', 'coffee', 'beverage'])])
@@ -242,6 +250,198 @@ class Weather:
         self.temperature = "It's %s %s %s. %s. %s wear %s, and %s." % (
             state, location, when, temperature, what_to_do, clothes, advice)
 
+    def get_humidity(self):
+
+        # --- generates a statement describing relative humidity, factoring in temperature ---
+
+        humidity = self.info.get('humidity', 0)
+        temp     = int(self.info['current_temp'])
+        is_hot   = temp >= 24
+        is_cold  = temp < 10
+
+        if humidity < 30:
+            level = random.choice(['very dry', 'quite dry', 'bone dry'])
+            if is_hot:
+                comment = random.choice([
+                    'The dry heat will sap your energy fast — drink plenty of water.',
+                    'At least there is no humidity, but stay hydrated in this heat.',
+                    'Desert-like conditions. Sunscreen and water are your best friends today.',
+                ])
+            elif is_cold:
+                comment = random.choice([
+                    'The dry cold air will chap your lips and skin — moisturise up.',
+                    'Cold and dry is a harsh combo. Lip balm and a warm drink should help.',
+                    'Dry and cold — your skin is not going to thank you. Stay hydrated.',
+                ])
+            else:
+                comment = random.choice([
+                    'You might want to keep some water nearby.',
+                    'Grab some lip balm and stay hydrated.',
+                    'A good hair day, but drink plenty of water.',
+                ])
+
+        elif humidity < 50:
+            level = random.choice(['comfortable', 'nice and comfortable', 'pleasantly dry'])
+            if is_hot:
+                comment = random.choice([
+                    'The heat is real but at least the humidity is not making it worse.',
+                    'Warm but not sticky — could be much worse.',
+                    'Good humidity for the heat. Stay in the shade and you will be fine.',
+                ])
+            elif is_cold:
+                comment = random.choice([
+                    'Humidity is not adding to the chill, so that is something.',
+                    'Dry cold is more manageable — layer up and you should be okay.',
+                    'The cold feels cleaner at least. Wrap up well.',
+                ])
+            else:
+                comment = random.choice([
+                    'Pretty ideal conditions.',
+                    'Humidity-wise, you lucked out today.',
+                    'Comfortable out there — enjoy it.',
+                ])
+
+        elif humidity < 70:
+            level = random.choice(['a little humid', 'somewhat humid', 'moderately humid'])
+            if is_hot:
+                comment = random.choice([
+                    'The heat combined with the humidity will make it feel warmer than it is.',
+                    'It is going to feel muggy out there. Stay in the shade where you can.',
+                    'Not unbearable, but the humidity will make the heat feel stickier.',
+                ])
+            elif is_cold:
+                comment = random.choice([
+                    'The damp air will make the cold feel sharper than the temperature suggests.',
+                    'Humid cold has a way of cutting through your clothes. Layer up well.',
+                    'It will feel colder than it looks — the moisture in the air does not help.',
+                ])
+            else:
+                comment = random.choice([
+                    'You might feel a bit sticky outside.',
+                    'Could be worse — still breathable.',
+                    'A bit muggy, but manageable.',
+                ])
+
+        elif humidity < 85:
+            level = random.choice(['quite humid', 'very humid', 'pretty humid'])
+            if is_hot:
+                comment = random.choice([
+                    'The heat and humidity together are going to feel oppressive out there.',
+                    'It will feel significantly hotter than the temperature reading. Stay cool.',
+                    'High humidity and heat is a rough combo. Try not to overdo it outside.',
+                ])
+            elif is_cold:
+                comment = random.choice([
+                    'Damp cold is miserable — it will seep into your bones. Dress in layers.',
+                    'The cold is going to feel much worse with all this moisture in the air.',
+                    'Wet and cold outside. Not a great day to be hanging around outdoors.',
+                ])
+            else:
+                comment = random.choice([
+                    'Expect that lovely sticky feeling the moment you step outside.',
+                    "Hair's going to do whatever it wants today.",
+                    "It'll feel heavier than the temperature suggests.",
+                ])
+
+        else:
+            level = random.choice(['extremely humid', 'oppressively humid', 'tropical levels of humid'])
+            if temp > 30:
+                comment = random.choice([
+                    'Stepping outside will feel like walking into a sauna.',
+                    "You'll be sweating before you've gone two steps.",
+                    'The air is basically water at this point.',
+                ])
+            elif temp < 15:
+                comment = random.choice([
+                    'The cold can get into your bones, stay warm.',
+                    'Not a great combination with the chilly weather.',
+                    'The air is basically water at this point.',
+                ])
+            else:
+                comment = random.choice([
+                    'You will be feeling very sticky I imagine, fortunately the temperature is mild.',
+                    'The air is basically water at this point.',
+                ])
+
+        self.humidity = 'Relative humidity is at %d percent — %s. %s' % (humidity, level, comment)
+
+    def get_air_quality(self, lat, lon):
+
+        # --- fetches European AQI from open-meteo air quality API and stores average ---
+
+        print('Requesting air quality... ', end='')
+        try:
+            params = {
+                'latitude':  lat,
+                'longitude': lon,
+                'hourly':    'european_aqi,pm2_5',
+            }
+            response = self.client.get(AIR_QUALITY_URL, params=params)
+            if response.ok:
+                data   = response.json()
+                values = [v for v in data['hourly']['european_aqi'] if v is not None]
+                avg    = int(round(sum(values) / len(values))) if values else None
+                print(f'avg AQI: {avg}')
+                self.aqi_value = avg
+                self.aqi       = self._aqi_statement(avg) if avg is not None else False
+            else:
+                print(f'{response.status_code} ERROR')
+                self.aqi_value = None
+                self.aqi       = False
+        except Exception as e:
+            print(f'ERROR while requesting air quality: {e}')
+            self.aqi_value = None
+            self.aqi       = False
+
+    def _aqi_statement(self, aqi):
+
+        # --- generates a statement describing the air quality index ---
+
+        if aqi <= 20:
+            category = random.choice(['excellent', 'great', 'pristine'])
+            comment  = random.choice([
+                'Breathe it all in — wonderfully clean out there.',
+                'Perfect air quality. Lucky you.',
+                'As fresh as it gets.',
+            ])
+        elif aqi <= 40:
+            category = random.choice(['good', 'fairly good', 'decent'])
+            comment  = random.choice([
+                'Nothing to worry about air-wise.',
+                'Pretty clean out there.',
+                'Healthy air today.',
+            ])
+        elif aqi <= 60:
+            category = random.choice(['moderate', 'acceptable', 'okay'])
+            comment  = random.choice([
+                'Sensitive individuals might want to take it easy outside.',
+                'Not ideal, but most people will be fine.',
+                'A bit below perfect but generally okay.',
+            ])
+        elif aqi <= 80:
+            category = random.choice(['poor', 'not great', 'fairly bad'])
+            comment  = random.choice([
+                'Limit prolonged outdoor activity if you can.',
+                'Might want to keep outdoor time short today.',
+                "Not the best day for a long run outside.",
+            ])
+        elif aqi <= 100:
+            category = random.choice(['very poor', 'quite bad', 'unhealthy'])
+            comment  = random.choice([
+                'Best to stay indoors where possible.',
+                "If you're sensitive to air quality, today's a good day to stay in.",
+                'Keep outdoor exposure minimal today.',
+            ])
+        else:
+            category = random.choice(['extremely poor', 'hazardous', 'dangerous'])
+            comment  = random.choice([
+                'Seriously consider staying inside today.',
+                'This is not a good day to be breathing outdoor air.',
+                'An air quality mask would not go amiss if you must go out.',
+            ])
+
+        return 'The air quality index is %d, which is %s. %s' % (aqi, category, comment)
+
     def _wmo_to_cond_key(self, wmo_code):
 
         if wmo_code in (96, 99):
@@ -267,14 +467,15 @@ class Weather:
 
         # --- generates random statements to describe the weather conditions ---
 
-        # track rain for current conditions
-        if when == 'now' and wmo_code in (61, 63, 65, 80, 81, 82):
-            self.rain_today = True
-
+        # track rain and sun for current conditions only — 'later' is tomorrow's forecast
         if when == 'now':
+            if wmo_code in (61, 63, 65, 80, 81, 82):
+                self.rain_today = True
+            if wmo_code in (0, 1):
+                self.sun_today = True
             intro = pick(WEATHER_NOW_INTROS[self.personality])
 
-        elif when == 'later':
+        elif when == 'tomorrow':
             if wmo_code == self.info['wmo_code']:
                 return pick(WEATHER_SAME_AS_NOW[self.personality])
             intro = pick(WEATHER_LATER_INTROS[self.personality])
@@ -298,7 +499,7 @@ class Weather:
 
         if when == 'now':
             self.condition = result
-        return result
+        return result  # for both 'now' and 'tomorrow'
 
     def get_wind(self):
 

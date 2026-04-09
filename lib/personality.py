@@ -60,40 +60,44 @@ import random
 
 SOUND_ODDS = {
     'serious': {
-        'morning':      0,
-        'rain':         0,
-        'cant_go_out':  0,
-        'back_to_you':  0,
-        'nobody_cares': 0,
-        'trump':        0,
-        'error':        0,
+        'morning':          0,
+        'weather':          0,
+        'cant_go_out_aqi':  0,
+        'news_intro':       0,
+        'news_end':         0,
+        'nobody_cares':     0,
+        'trump':            0,
+        'error':            0,
     },
     'cheeky': {
-        'morning':      5,
-        'rain':         5,
-        'cant_go_out':  10,
-        'back_to_you':  8,
-        'nobody_cares': 8,
-        'trump':        3,
-        'error':        5,
+        'morning':          5,
+        'weather':          5,
+        'cant_go_out_aqi':  3,
+        'news_intro':       5,
+        'news_end':         8,
+        'nobody_cares':     8,
+        'trump':            3,
+        'error':            5,
     },
     'bubbly': {
-        'morning':      10,
-        'rain':         10,
-        'cant_go_out':  20,
-        'back_to_you':  15,
-        'nobody_cares': 20,
-        'trump':        5,
-        'error':        10,
+        'morning':          10,
+        'weather':          10,
+        'cant_go_out_aqi':  4,
+        'news_intro':       10,
+        'news_end':         15,
+        'nobody_cares':     20,
+        'trump':            5,
+        'error':            10,
     },
     'chaos': {
-        'morning':      2,
-        'rain':         2,
-        'cant_go_out':  3,
-        'back_to_you':  2,
-        'nobody_cares': 3,
-        'trump':        2,
-        'error':        3,
+        'morning':          2,
+        'weather':          2,
+        'cant_go_out_aqi':  2,
+        'news_intro':       3,
+        'news_end':         2,
+        'nobody_cares':     3,
+        'trump':            2,
+        'error':            3,
     },
 }
 
@@ -205,33 +209,94 @@ DAY_SPECIAL['chaos'] = {
 }
 
 # ── GOODBYES ──────────────────────────────────────────────────────────────────
+# Keyed by personality → time of day (morning | afternoon | evening | night)
 
 GOODBYE = {
-    'serious': [
-        "That concludes your briefing for today, {owner}. Have a productive day.",
-        "That is all for this morning, {owner}. Goodbye.",
-        "You are now fully informed, {owner}. Have a good day.",
-        "Thank you for listening. Have a good day, {owner}.",
-    ],
-    'cheeky': [
-        "And that's your lot! Go forth and try not to embarrass yourself too much, {owner}.",
-        "Right, I've done my bit. The rest is up to you, {owner}. No pressure. Absolutely none.",
-        "Off you go, {owner}. You've got this. Probably.",
-        "That's everything! I'd wish you luck but honestly you're going to need more than that.",
-        "And there you have it. I'm done. You should get moving too, {owner}.",
-        "Alright, I'm done talking. That makes one of us.",
-        "That's all from me. Go out there and try to seem like you know what you're doing, {owner}.",
-    ],
-    'bubbly': [
-        "Well, that's all the info from me today, {owner}! Have an absolutely fantastic day!",
-        "And there you go, {owner}! Your daily dose of awesome information! Go smash it!",
-        "You are so well informed right now! Have an amazing day, {owner}!",
-        "That's it from me! Go out there and have a brilliant day, {owner}! You've got this!",
-        "I feel so informed already! Hope your day is as amazing as you are, {owner}!",
-        "Off you go, {owner}! Today is going to be wonderful, I just know it!",
-    ],
+    'serious': {
+        'morning': [
+            "That concludes your briefing for today, {owner}. Have a productive day.",
+            "That is all for this morning, {owner}. Goodbye.",
+            "You are now fully informed, {owner}. Have a good day.",
+            "Thank you for listening. Have a good day, {owner}.",
+        ],
+        'afternoon': [
+            "That is all, {owner}. Have a productive rest of the day.",
+            "That concludes your afternoon briefing, {owner}. Carry on.",
+            "You are now up to date, {owner}. Make the most of the afternoon.",
+        ],
+        'evening': [
+            "That is all for this evening, {owner}. Have a pleasant night.",
+            "That concludes your evening briefing, {owner}. Enjoy the rest of your night.",
+            "You are now informed, {owner}. Have a good evening.",
+        ],
+        'night': [
+            "That is all, {owner}. Get some rest.",
+            "Briefing complete. Good night, {owner}.",
+            "You are now informed, {owner}. Sleep well.",
+        ],
+    },
+    'cheeky': {
+        'morning': [
+            "And that's your lot! Go forth and try not to embarrass yourself too much, {owner}.",
+            "Right, I've done my bit. The rest is up to you, {owner}. No pressure. Absolutely none.",
+            "Off you go, {owner}. You've got this. Probably.",
+            "That's everything! I'd wish you luck but honestly you're going to need more than that.",
+            "And there you have it. I'm done. You should get moving too, {owner}.",
+            "Alright, I'm done talking. That makes one of us.",
+            "That's all from me. Go out there and try to seem like you know what you're doing, {owner}.",
+        ],
+        'afternoon': [
+            "Right, that's your afternoon briefing done. The day's half gone — what have you even been doing?",
+            "And that's your lot for the afternoon. Try to salvage what's left of the day, {owner}.",
+            "Off you trot. The afternoon won't waste itself, but you might.",
+            "Done. You now have all the information you need to continue being mildly functional, {owner}.",
+        ],
+        'evening': [
+            "And that's your evening briefing. Go put your feet up — you've earned it. Probably.",
+            "Right, I'm done. Time to wind down, {owner}. Or don't. I'm a clock, not your therapist.",
+            "Evening briefing complete. Try to actually relax this time, {owner}.",
+            "That's all from me. The evening is yours. Try not to spend it doom-scrolling.",
+        ],
+        'night': [
+            "Off to bed with you, {owner}. Don't let the news keep you awake. Too late, probably.",
+            "Right, that's enough information for one night. Sleep, {owner}. You need it.",
+            "Goodnight, {owner}. Try to actually sleep instead of staring at the ceiling.",
+            "That's your lot. Lights out. The world will still be chaotic in the morning.",
+        ],
+    },
+    'bubbly': {
+        'morning': [
+            "Well, that's all the info from me today, {owner}! Have an absolutely fantastic day!",
+            "And there you go, {owner}! Your daily dose of awesome information! Go smash it!",
+            "You are so well informed right now! Have an amazing day, {owner}!",
+            "That's it from me! Go out there and have a brilliant day, {owner}! You've got this!",
+            "I feel so informed already! Hope your day is as amazing as you are, {owner}!",
+            "Off you go, {owner}! Today is going to be wonderful, I just know it!",
+        ],
+        'afternoon': [
+            "That's all from me this afternoon, {owner}! Go enjoy the rest of the day!",
+            "You are so wonderfully informed! Have a fantastic afternoon, {owner}!",
+            "And there you go! The afternoon is yours, {owner}! Make it count!",
+            "That's it from me! Go make the most of this glorious afternoon, {owner}!",
+        ],
+        'evening': [
+            "That's all from me this evening, {owner}! Have a lovely night ahead!",
+            "You are officially informed! Now go enjoy a wonderful evening, {owner}!",
+            "That's it! Wind down and treat yourself tonight, {owner}! You deserve it!",
+            "Evening briefing done! Now go relax and have a brilliant evening, {owner}!",
+        ],
+        'night': [
+            "That's all from me! Now get some rest, {owner}! Sweet dreams!",
+            "You are fully informed and ready for sleep! Good night, {owner}!",
+            "That's it! Off to bed with you, {owner}! Sleep tight!",
+            "Goodnight, {owner}! Rest well and wake up even more amazing tomorrow!",
+        ],
+    },
 }
-GOODBYE['chaos'] = GOODBYE['cheeky'] + GOODBYE['bubbly']
+GOODBYE['chaos'] = {
+    part: GOODBYE['cheeky'][part] + GOODBYE['bubbly'][part]
+    for part in ('morning', 'afternoon', 'evening', 'night')
+}
 
 # ── WEATHER ───────────────────────────────────────────────────────────────────
 
@@ -296,7 +361,7 @@ WEATHER_CONDITIONS = {
             ("Rain rain go away. It won't. But it's worth saying.", "Umbrella, {owner}. You know the drill."),
         ],
         'rain': [
-            ("More rain. What a delightful surprise said absolutely nobody.", "Take your umbrella, {owner}. Or don't. I'm a clock, not a cop."),
+            ("More rain. What a delightful surprise, said absolutely nobody.", "Take your umbrella, {owner}. Or don't. I'm a clock, not a cop."),
             ("It's raining. Again. As it does.", "Umbrella time, {owner}."),
             ("Oh fantastic, rain. The sky's crying and honestly, same.", "Cover up and take your umbrella, {owner}."),
             ("Darn it, rain really fries my circuits.", "Don't forget your umbrella, {owner}."),
@@ -321,7 +386,7 @@ WEATHER_CONDITIONS = {
             ("Blue skies. I find it more alarming than reassuring, personally.", "Enjoy it while it lasts."),
         ],
         'clouds': [
-            ("Grey. Grim. Clouds. Another one of those days.", "Be positive though. At least it's not raining. Yet."),
+            ("Grey grim clouds. Another one of those days.", "Be positive though, days like these can be cozy too."),
             ("Cloudy. Come out, Sun. We know you're in there.", "Every cloud has a silver lining, allegedly."),
             ("Overcast skies in {city}. Shocking. Truly unprecedented.", "You'll be fine. Probably."),
         ],
