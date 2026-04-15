@@ -1,1 +1,4 @@
 .claude/worktrees/
+run.local.py
+**/**/**/.DS_Store
+**/**/__pycache__/*

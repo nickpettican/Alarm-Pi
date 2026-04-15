@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -6,10 +6,10 @@
 
 # ___        Copyright 2017 Nicolas Pettican            ___
 
-# ___   This software is licensed under the Apache 2    ___
-# ___   license. You may not use this file except in    ___
-# ___   compliance with the License.                    ___
-# ___   You may obtain a copy of the License at         ___
+# ___    This software is licensed under the Apache 2   ___
+# ___    license. You may not use this file except in   ___
+# ___    compliance with the License.                   ___
+# ___    You may obtain a copy of the License at        ___
 
 # ___    http://www.apache.org/licenses/LICENSE-2.0     ___
 
@@ -21,59 +21,91 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-from bs4 import BeautifulSoup
-import requests, json
+import requests
+import xml.etree.ElementTree as ET
+from urllib.parse import quote_plus
 
-class Gnews:
+MAX_HEADLINES = 10
 
-    # --- obtains news from Google News ---
+# Google News RSS topic URLs (global editions)
+# Topic IDs may change; verify at news.google.com if feeds stop returning results
+_TOPIC_URLS = {
+    'world_news':   'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx1YlY4U0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'health_news':  'https://news.google.com/rss/topics/CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JXVnVMVWRDS0FBUAE',
+    'tech_news':    'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGRqTVhZU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+    'science_news': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFp0Y1RjU0JXVnVMVWRDR2dKSlRpZ0FQAQ',
+}
 
-    def __init__(self, country_code):
-        
-        self.start_requests()
+# Country code → (language, Google country code) for local editions
+# Google News local edition URL format:
+#   https://news.google.com/rss?hl={lang}-{GL}&gl={GL}&ceid={GL}:{lang}
+_COUNTRY_LANG = {
+    'UK': ('en', 'GB'), 'GB': ('en', 'GB'),
+    'US': ('en', 'US'), 'AU': ('en', 'AU'),
+    'CA': ('en', 'CA'), 'IN': ('en', 'IN'),
+    'IE': ('en', 'IE'), 'NZ': ('en', 'NZ'),
+    'ZA': ('en', 'ZA'), 'SG': ('en', 'SG'),
+    'FR': ('fr', 'FR'), 'DE': ('de', 'DE'),
+    'ES': ('es', 'ES'), 'IT': ('it', 'IT'),
+    'PT': ('pt', 'PT'), 'BR': ('pt', 'BR'),
+    'MX': ('es', 'MX'), 'AR': ('es', 'AR'),
+    'JP': ('ja', 'JP'), 'CN': ('zh', 'CN'),
+    'KR': ('ko', 'KR'), 'RU': ('ru', 'RU'),
+    'PL': ('pl', 'PL'), 'NL': ('nl', 'NL'),
+    'SE': ('sv', 'SE'), 'NO': ('no', 'NO'),
+}
 
-        self.country_code = country_code
-        self.urls = {   'world news': 'http://news.google.com/news?output=rss',
-                        'country news': 'http://news.google.com/news?output=rss&ned=%s' %(country_code), 
-                        'medical news': 'http://news.google.com/news?output=rss&ned=%s&topic=m' %(country_code), 
-                        'technological news': 'http://news.google.com/news?output=rss&ned=%s&topic=t' %(country_code), 
-                        'scientific news': 'http://news.google.com/news?output=rss&ned=%s&topic=snc' %(country_code) }
-        self.all_news = ['to avoid repeating news']
 
-    def start_requests(self):
+def _local_news_url(country_code):
+    lang, gl = _COUNTRY_LANG.get(country_code.upper(), ('en', country_code.upper()))
+    return f'https://news.google.com/rss?hl={lang}-{gl}&gl={gl}&ceid={gl}:{lang}'
 
-        # --- start requests session as 'pull' ---
 
-        self.pull = requests.Session()
-        user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
-        self.pull.headers.update({'User-Agent': user_agent})
+class News:
 
-    def get_news(self, choice):
+    def __init__(self, country_code=None, search_queries=None):
 
-        # --- requests news from Google News ---
+        self.client = requests.Session()
+        self.client.headers.update({
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            )
+        })
+
+        self.urls = dict(_TOPIC_URLS)
+
+        if country_code:
+            self.urls['local_news'] = _local_news_url(country_code)
+
+        for query in (search_queries or []):
+            self.urls[f'{query} news'] = f'https://news.google.com/rss?q={quote_plus(query)}'
+
+        self.seen_headlines = []
+
+    def get_news(self, category):
 
         try:
-            response = self.pull.get(self.urls[choice])
-            return self.news_titles(response)
-        except:
-            return False
+            response = self.client.get(self.urls[category], timeout=10)
+            response.raise_for_status()
+            return self.parse_headlines(response.content)
+        except Exception:
+            return []
 
-    def news_titles(self, response):
+    def parse_headlines(self, content):
 
-        # --- finds just the news titles ---
+        root   = ET.fromstring(content)
+        titles = root.findall('.//item/title')
+        return [
+            self.format_headline(item.text)
+            for item in titles[:MAX_HEADLINES]
+            if item.text and 'Google' not in item.text
+        ]
 
-        news = BeautifulSoup(response.content, 'lxml')
-        news_titles_raw = news.find_all('title')
-        news_titles = [news.text.encode('utf-8') for news in news_titles_raw if 'Google' not in news.text]
-        # ouch, can't get any news on Google itself - need to fix this
-        return self.remove_tail(news_titles)
+    def format_headline(self, raw):
 
-    def remove_tail(self, news_titles):
-
-        # --- removes 'tail' from titles ---
-
-        news_titles_done = []
-        for news in news_titles:
-            head, sep, tail = news.partition(' - ')
-            news_titles_done.append(head)
-        return [line.replace('&', 'and') for line in news_titles_done]
+        # "Headline text - Source Name" → "Source Name says: Headline text."
+        headline, sep, source = raw.rpartition(' - ')
+        if sep and source:
+            return f"{source.strip()} says: {headline.strip()}."
+        return raw.strip()

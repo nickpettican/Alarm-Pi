@@ -1,164 +1,172 @@
-# AlarmPi 1.1.1
+# AlarmPi 2.0.0
 Your smart alarm clock for the Raspberry Pi.
 
-> Uses Python 2.7
+> Python 3 · Open-Meteo · Piper TTS · Google News RSS
 
 ## Synopsis
 
-Have you got a Raspberry Pi that's just abandoned in a drawer? AlarmPi is a smart alarm 'clock' for the Raspberry Pi that plays music, gives you a weather forecast for the day, reads the top news, has a wacky personality, finds Trump quite funny and likes movie quote clips. All you need is a speaker to splug into the Pi and to follow the instructions bellow.
+Have you got a Raspberry Pi abandoned in a drawer? AlarmPi is a smart alarm clock for the Raspberry Pi that plays music, gives you a weather forecast, reads the top news headlines, and greets you with a configurable personality — from calm and professional to absolute chaos. All you need is a speaker plugged into the Pi.
 
-## Example:
+## What it does
 
-For a quick test, first see _How to set up_ and insert your credentials in _run.py_. Once it is set, just use `python run.py` in the terminal and (given all the credentials are set to 'True') the following will happen:
+For a quick test, set your credentials in `run.py`. Once configured, AlarmPi will:
 
-1. Plays a short 10 - 20 second tune - which adapts to the time of year (e.g. Xmas songs)
-2. Greets 'Good morning/afternoon/evening/night' and gives you a short motivational quote in the morning (you can add your own)
-3. Gives you the date i.e. day of the week and day of the month
-4. Gives you a weather forecast: first the temperature, followed by the condition (tells you to take an umbrella if it's raining, if it's windy, etc) and finally when the sun rises and sets
-5. Reads the top 10 news headlines for the World or your own home country from Google News
-6. Reads the top 10 Medical, Technological and Scientific news headlines for your home country from Google News - these can be toggled on/off
-7. Wishes you a pleasant day
-8. It may randomly give you a Jim Carrey, Rick and Morty or Family Guy sound clip for your (mainly my) amusement
+1. Play a short 10–20 second tune that adapts to the time of year (e.g. Christmas songs in December)
+2. Greet you by name with a time-aware greeting and an optional morning quote
+3. Tell you the date and any special day message (Friday, Saturday, Sunday)
+4. Give a weather forecast: temperature, sky condition (with umbrella advice if raining), wind (when rain/snow ≥ 20 km/h)
+5. Read up to 10 headlines per enabled news category from Google News
+6. Wish you a pleasant day
+7. Randomly inject funny sound clips depending on your personality mode
 
 ## Motivation
 
-I had a Raspberry Pi and it just occurred to me to make a smart alarm clock that gives me all the information I need in the mornings while I have breakfast. Kind of like a radio, but more personalised and gives you the information whenever you want it to.
+I had a Raspberry Pi and it occurred to me to build a smart alarm clock that gives me everything I need in the morning over breakfast — like a radio, but more personalised.
 
-## Python library requirements
+## Requirements
 
-* **Requests 2.10.0** - don't use 2.11+ because it does not work with text-to-speach yet
-* **lxml** - to parse HTML
-* **Beautiful Soup** - to parse HTML
-* **Pyvona** - the voice wrapper
-* **Pygame** - the audio wrapper
-* **Arrow** - provides the date and time
-* **Itertools** - for efficient looping
-* **Random** - randomise stuff
-* **Time** - no clock could do without time
-* **JSON** - to sort the weather data from Yahoo! Weather
+### Python
 
-`sudo pip install <package>` should work just fine
+Python 3.8 or later. Install dependencies with:
 
-To downgrade to Requests 2.10.0 use `sudo pip install requests==2.10.0`
+```bash
+pip install requests arrow
+```
 
-## APIs
+### Text-to-speech
 
-### Ivona
+**On Linux / Raspberry Pi**: [Piper TTS](https://github.com/rhasspy/piper) — a fast, offline, neural TTS engine.
 
-Ivona is the API that converts text to speech; without it AlarmPi can't talk! In order to use the Ivona voice you need to sign up for a free beta test account at Amazon: 
+1. Download the Piper binary for your platform from the [Piper releases page](https://github.com/rhasspy/piper/releases)
+2. Download a voice model (`.onnx` + `.onnx.json`) from the [Piper voice library](https://huggingface.co/rhasspy/piper-voices)
+3. Set `piper_executable` and `piper_model` in `run.py` to their paths
 
-> [https://www.ivona.com/us/account/speechcloud/creation/](https://www.ivona.com/us/account/speechcloud/creation/)
+Audio playback on Linux uses `aplay` (WAV) and `mpg123` (MP3) — both available via `apt`.
 
-After signing up you should get an AuthKey and AuthSecret which you insert in the credentials in _run.py_.
+**On macOS**: AlarmPi uses the built-in `say` command. No configuration needed; `piper_executable` and `piper_model` are ignored.
 
-Browse the different voices available, the defaults for AlarmPi are 'Salli' and 'Brian', but you can use whichever you want really.
+### Weather
 
-### Open Weather 
+Weather is provided by [Open-Meteo](https://open-meteo.com/) — **no API key required**.
 
-AlarmPi gets its weather information from Open Weater. It's free, and it's very easy to sign up and obtain an _auth key_:
+Supply either a `city` name (geocoded automatically) or `latitude`/`longitude` directly to skip geocoding.
 
-> [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up)
+### News
+
+Google News RSS — no API key required.
 
 ## How to set up
 
-Before you do anything, check that you have all the required Python libraries. See _Python library requirements_ above. Also make sure you signed up to the _APIs_.
+Open `run.py` and fill in the `Alarmpi()` constructor:
 
-To enter your credentials and personal options open _run.py_. You will see the following:
-
+```python
+alarmpi = Alarmpi(
+    owner            = 'Your name',         # name used in greetings
+    app_dir          = app_directory,        # path to the alarmpi directory
+    tune             = False,                # play a morning tune (True/False)
+    piper_executable = '/path/to/piper',     # Piper binary (Linux only)
+    piper_model      = '/path/to/model.onnx',# Piper voice model (Linux only)
+    personality      = 'bubbly',             # serious | cheeky | bubbly | chaos
+    weather_enabled  = True,
+        # city         = 'London',           # city name (used if lat/lon not given)
+        latitude       = 51.5,               # latitude  (skips geocoding if given)
+        longitude      = -0.12,              # longitude (skips geocoding if given)
+        country_code   = 'uk',               # 2-letter country code
+    news_enabled     = False,
+        world_news     = False,              # global news
+        local_news     = True,               # your country's edition
+        health_news    = True,               # health & medicine
+        tech_news      = True,               # technology
+        science_news   = False,              # science
+        search_queries = [],                 # e.g. ['formula 1', 'AI']
+)
 ```
-    alarmpi = Alarmpi(  owner = 'Your name',
-						app_dir = app_directory,
-						tune = False,
-						voice_female = True,
-						voice_male = False,
-						ivona_auth = 'auth',
-						ivona_auth_secret = 'auth_secret',
-						weather = True,
-			    			weather_auth='auth',
-			    			city='London',
-			    			country_code='uk',
-						news = False,
-			   	 			world_news = False,
-			    			country_news = True,
-			    			health_news = True,
-			    			tech_news = True,
-			    			science_news = False)
-```
 
-Let me explain what it all means:
+### Parameter reference
 
-|	Variables   		|	Defaults   		|	Explanation 															|
-|:---------------------:|:-----------------:|:------------------------------------------------------------------------	|
-|	owner 				|	'Your name' 	|	Name by which AlarmPi will greet you and refer to you					|
-|	app_dir 			|	app_directory 	|	*IMPORTANT! This tells AlarmPi where everything is 						|
-|	tune 				|	True 			|	True or False depending on if you want it to play a morning tune		|
-|	voice_female 		|	True 			|	True/False or the 'name' of the voice you want AlarmPi to have 			|
-|	voice_male 			|	False 			|	True/False or the 'name' of the voice you want AlarmPi to have 			|
-|	ivona_auth 			|	'auth' 			|	The Ivona authorisation code needed for AlarmPi to talk 				|
-|	ivona_auth_secret 	|	'auth_secret'	|	The Ivona authorisation secret code needed for AlarmPi to talk 			|
-|	weather 			|	True 			|	True or False depending on if you want to listen to the weather info 	|
-|	weather_auth 		|	'auth' 			|	The Open Weather auth code in order to receive weather information 		|
-|	city 				|	'London'		|	Your City, if this doesn't work try the closest big city near you 		|
-|	country_code 		|	'uk'			|	Your country code, it has to be two characters e.g. uk is United Kingdom|
-|	news 				|	True 			|	True or False depending on if you want to listen to the news 			|
-|	world_news 			|	False			|	True or False depending on if you want to listen to the World news 		|
-|	country_news 		|	True 			|	True or False depending on if you want to listen to your country's news |
-|	health_news 		|	True 			|	True or False depending on if you want to listen to the medical news 	|
-|	tech_news 			|	True 			|	True or False depending on if you want to listen to the technology news |
-|	science_news 		|	False 			|	True or False depending on if you want to listen to the scientific news |
+| Parameter | Default | Description |
+|:---|:---|:---|
+| `owner` | `'Your name'` | Name AlarmPi uses to greet and refer to you |
+| `app_dir` | `app_directory` | Absolute path to the AlarmPi directory |
+| `tune` | `False` | Play a seasonal morning tune before speaking |
+| `piper_executable` | — | Path to Piper binary (Linux/Pi only) |
+| `piper_model` | — | Path to Piper `.onnx` voice model (Linux/Pi only) |
+| `personality` | `'bubbly'` | Speaking style — see Personality modes below |
+| `weather_enabled` | `True` | Enable weather forecast |
+| `city` | `None` | City name for geocoding (ignored if lat/lon given) |
+| `latitude` | `None` | Latitude — skips geocoding API call |
+| `longitude` | `None` | Longitude — skips geocoding API call |
+| `country_code` | `None` | ISO 3166-1 alpha-2 country code (e.g. `uk`, `us`) |
+| `news_enabled` | `False` | Enable news reading |
+| `world_news` | `False` | Read global news |
+| `local_news` | `False` | Read your country's local edition |
+| `health_news` | `False` | Read health & medical news |
+| `tech_news` | `False` | Read technology news |
+| `science_news` | `False` | Read science news |
+| `search_queries` | `[]` | Custom search terms, e.g. `['formula 1']` |
 
-*If AlarmPi's directory is not '/home/pi/alarmpi' please make sure you go into _morning_greeting.py_ and change the directory there as well. This is something I need to fix but for now this will solve the quote import problem.
+## Personality modes
 
-Note that you can also insert a custom Ivona voice name (e.g. 'Nicole'). However, make sure you leave the other gender's voice as False or AlarmPi will complain.
+The `personality` parameter controls AlarmPi's tone, vocabulary, and how often it plays funny sound clips.
 
-Once all is set, go to _How to schedule_ to set up the time you want it to run in.
+| Mode | Style | Sound effects |
+|:---|:---|:---|
+| `serious` | Formal, factual, no-nonsense | Disabled entirely |
+| `cheeky` | Sarcastic and witty | Occasional |
+| `bubbly` | Upbeat and enthusiastic (original behaviour) | Normal |
+| `chaos` | Combines cheeky + bubbly vocabulary | Maximum — all clips in rotation |
+
+Sound clips (in `sounds/funny/`) are played at random based on the personality. You can add your own MP3s to the relevant subdirectories.
 
 ## How to schedule
 
-To schedule the script in your RPi I recommend using _crontab_, which can be installed on your Raspberry Pi by running `sudo apt-get crontab`.
+Use `crontab` to schedule AlarmPi on your Raspberry Pi:
 
-Once you have _crontab_ installed, run `sudo crontab -e` in order to schedule your AlarmPi. Go to the bottom of the file that comes up and insert:
-
-**Option 1**: `* * * * * python /home/pi/alarmpi/run.py`
-
-* This will run AlarmPi but will not record activity in the _log.txt_.
-
-**Option 2**: `* * * * * /home/pi/alarmpi/run_alarm.sh` 
-
-* This will record all AlarmPi activity in _log.txt_. Make sure _run_alarmp.sh_ is executable by running `sudo chmod +x run_alarm.sh`. While you're at it, do the same command for both files in _audio_output_.
-
-I know it goes without saying, but make sure you include the right path to the file (yours might not be in /home/pi/alarmpi/).
-
-Breakdown explanation:
-
-```
-#        * * * * *  command to execute
-#        ┬ ┬ ┬ ┬ ┬
-#        │ │ │ │ │
-#        │ │ │ │ │
-#        │ │ │ │ └───── day of week (0 - 7) (0 to 6 are Sunday to Saturday; 
-#	     │ │ │ │		7 is Sunday, the same as 0)
-#        │ │ │ └────────── month (1 - 12)
-#        │ │ └─────────────── day of month (1 - 31)
-#        │ └──────────────────── hour (0 - 23)
-#        └───────────────────────── min (0 - 59)
+```bash
+sudo crontab -e
 ```
 
-For example: `00 7 * * 1-5 /home/pi/alarmpi/run_alarm.sh` will run it every weekday at 7am, and `00 9 * * 6-7 /home/pi/alarmpi/run_alarm.sh` will run it in the weekend at 9am. 
+Add one of:
+
+**Option 1** — run without logging:
+```
+00 7 * * 1-5 python3 /home/pi/alarmpi/run.py
+```
+
+**Option 2** — run with logging via the shell wrapper:
+```
+00 7 * * 1-5 /home/pi/alarmpi/run_alarm.sh
+```
+
+Make sure `run_alarm.sh` is executable:
+```bash
+sudo chmod +x run_alarm.sh
+```
+
+Example: run at 7am on weekdays and 9am on weekends:
+```
+00 7 * * 1-5 /home/pi/alarmpi/run_alarm.sh
+00 9 * * 6-7 /home/pi/alarmpi/run_alarm.sh
+```
+
+Crontab format reference:
+```
+# ┌───────── min (0–59)
+# │ ┌─────── hour (0–23)
+# │ │ ┌───── day of month (1–31)
+# │ │ │ ┌─── month (1–12)
+# │ │ │ │ ┌─ day of week (0–7, both 0 and 7 = Sunday)
+# │ │ │ │ │
+# * * * * *  command
+```
 
 ## Audio output
 
-AlarmPi comes with its own audio output command files in order to reduce background noise when the alarm is off. As it starts, it switches the audio output to AUDIO_JACK and as it finishes it switches back to HDMI. In order to change this go to the bottom of _run.py_ and disable or change as you wish.
+On Raspberry Pi, `run.py` switches audio to the 3.5mm jack at startup and back to HDMI on exit (via scripts in `audio_output/`). This eliminates background hiss when the alarm is idle. Make the scripts executable:
 
-The reason I did this is because the RPi has background noise when connected to the AUDIOJACK i.e. to speakers, so by only using them as output during the alarm you avoid this.
-
-If you want to take advantage of this feature make sure the audio output files are executable. Again, this can be done by simply running `sudo chmod +x filename.sh`.
-
-## Future development
-
-Next steps will include storing all user credentials in a config file, making it easier for the user while fixing corrent issues with paths.
-
-Also in the works is include a list of international days, so that AlarmPi will let you know what international festive/non-festive day it is.
+```bash
+sudo chmod +x audio_output/AUDIO_JACK.sh audio_output/HDMI_out.sh
+```
 
 ## License
 

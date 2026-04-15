@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
@@ -21,36 +21,40 @@
 # ___    License for the specific language governing    ___
 # ___    permissions and limitations under the License. ___
 
-import arrow, pygame
+import arrow, subprocess, sys, os
 
 def choose_tune(path):
 
-	# --- chooses tune according to date ---
+    # --- chooses tune according to date ---
 
-	today = arrow.now().format('DD MMMM').lower()
+    today = arrow.now().format('DD MMMM').lower()
 
-	xmas_time = 'december'
-	valentines = '14 february'
-	summer = ['june', 'july', 'august']
+    xmas_time = 'december'
+    valentines = '14 february'
+    summer = ['june', 'july', 'august']
 
-	if xmas_time == today.split()[1]:
-		return path + '/sounds/xmas/'
+    if xmas_time == today.split()[1]:
+        return path + '/sounds/xmas/'
 
-	if valentines == today:
-		return path + '/sounds/valentines/'
+    if valentines == today:
+        return path + '/sounds/valentines/'
 
-	if any(month in today for month in summer):
-		return path + '/sounds/summer/'
+    if any(month in today for month in summer):
+        return path + '/sounds/summer/'
 
-	return path + '/sounds/default/'
+    return path + '/sounds/default/'
 
 
 def play_sound(path, sound):
 
-	# --- plays the song / tune ---
+    # --- plays the song / tune ---
 
-	pygame.mixer.init()
-	pygame.mixer.music.load(path + sound)
-	pygame.mixer.music.play()
-	while pygame.mixer.music.get_busy() == True:
-		continue
+    filepath = path + sound
+    if sys.platform == 'darwin':
+        subprocess.run(['afplay', filepath], check=True)
+    else:
+        ext = os.path.splitext(filepath)[1].lower()
+        if ext == '.mp3':
+            subprocess.run(['mpg123', '-q', filepath], check=True)
+        else:
+            subprocess.run(['aplay', filepath], check=True)

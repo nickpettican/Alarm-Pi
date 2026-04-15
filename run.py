@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # ___        AlarmPi V 1.1.1 by nickpettican            ___
 # ___   Your smart alarm clock for the Raspberry Pi     ___
@@ -32,20 +32,21 @@ Explanation:
 
 Alarmpi(owner = 'your name/nickname',               # name by which it will greet you
         tune = True or False,                       # enable or disable alarm tune
-        voice_female = True or False or name,       # make the voice female or give specific name
-        voice_male = True or False or name,         # make the voice male or give specific name
-        auth = 'your Ivona auth key',               # Ivona auth key
-        auth_secret = 'your Ivona auth secret',     # Ivona auth secret key
-        weather = True or False,                    # turn weather forecasting on / off
-            weather_auth='your Open Weather auth',  # Open Weather auth code for weather
-            city='London',                          # Your city name
+        piper_executable = '/path/to/piper',        # path to Piper binary (Linux only; ignored on macOS)
+        piper_model = '/path/to/model.onnx',        # path to Piper ONNX voice model (Linux only)
+        personality = 'bubbly',                     # serious | cheeky | bubbly | chaos
+        weather_enabled = True or False,            # turn weather forecasting on / off
+            city='London',                          # Your city name (used for geocoding if lat/lon not given)
             country_code='uk',                      # Your country 2 character code
-        news = True or False,                       # turn news telling on / off
-            world_news = True or False,             # enable / disable world news
-            uk_news = True or False,                # enable / disable UK news
-            health_news = True or False,            # enable / disable UK medical news
-            tech_news = True or False,              # enable / disable UK tech news
-            science_news = True or False)           # enable / disable UK science news
+            latitude=51.5,                          # (optional) latitude — skips geocoding API if provided
+            longitude=-0.12,                        # (optional) longitude — skips geocoding API if provided
+        news_enabled = True or False,               # turn news telling on / off
+            world_news = True or False,             # enable / disable world news (global topics)
+            local_news = True or False,             # enable / disable local edition (uses country_code)
+            health_news = True or False,            # enable / disable health news
+            tech_news = True or False,              # enable / disable technology news
+            science_news = True or False,           # enable / disable science news
+            search_queries = ['formula 1'])         # (optional) list of custom search terms
 
 '''
 
@@ -58,20 +59,21 @@ def main():
     alarmpi = Alarmpi(  owner = 'Your name',
                         app_dir = app_directory,
                         tune = False,
-                        voice_female = True,
-                        voice_male = False,
-                        ivona_auth = 'auth',
-                        ivona_auth_secret = 'auth_secret',
-                        weather = True,
-                            weather_auth='auth',
-                            city='London',
-                            country_code='uk',
-                        news = False,
+                        piper_executable = '/path/to/piper',
+                        piper_model      = '/path/to/model.onnx',
+                        personality      = 'bubbly',
+                        weather_enabled  = True,
+                        # city='London',
+                        latitude=51.531034,
+                        longitude=-0.154686,
+                        country_code='uk',
+                        news_enabled = False,
                             world_news = False,
-                            country_news = True,
+                            local_news = True,
                             health_news = True,
                             tech_news = True,
-                            science_news = False)
+                            science_news = False,
+                            search_queries = [])
     
     if alarmpi.tune:
         alarmpi.alarm_sound()
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     # --- turn speakers on ---
     
     if 'linux' in platform:
-        os.system(home_directory + '/audio_output/./AUDIO_JACK.sh')
+        os.system(app_directory + '/audio_output/./AUDIO_JACK.sh')
     
     # --- main function ---
     
@@ -95,4 +97,4 @@ if __name__ == "__main__":
     # --- turn speakers off ---
     
     if 'linux' in platform:
-        os.system(home_directory + '/audio_output/./HDMI_out.sh')
+        os.system(app_directory + '/audio_output/./HDMI_out.sh')
