@@ -316,31 +316,31 @@ WEATHER_NOW_INTROS = {
 WEATHER_NOW_INTROS['chaos'] = WEATHER_NOW_INTROS['cheeky'] + WEATHER_NOW_INTROS['bubbly']
 
 WEATHER_LATER_INTROS = {
-    'serious':  ['Later today,', 'Further in the day,', 'And for later today:'],
+    'serious':  ['Tomorrow,', 'And for tomorrow,', 'And once the day is finished:'],
     'cheeky':   [
-        "And if that wasn't enough, later on ",
-        "Oh and it gets better: later ",
-        "And then, hold on to your umbrella — later ",
-        "Plot twist: later ",
+        "And if that wasn't enough, tomorrow ",
+        "Oh and it gets better: tomorrow ",
+        "And then, hold on to your umbrella — tomorrow ",
+        "Plot twist: tomorrow ",
     ],
     'bubbly':   [
-        'And later on, it shows ', 'And further on, I foresee ',
-        'And later we have ', 'Looking ahead to later today: ',
+        'And tomorrow, it shows ', 'And after the day ends, I foresee ',
+        'And tomorrow we have ', 'Looking ahead to tomorrow: ',
     ],
 }
 WEATHER_LATER_INTROS['chaos'] = WEATHER_LATER_INTROS['cheeky'] + WEATHER_LATER_INTROS['bubbly']
 
 WEATHER_SAME_AS_NOW = {
-    'serious':  ['Conditions are expected to remain similar throughout the day.'],
+    'serious':  ['Conditions are expected to remain similar until tomorrow.'],
     'cheeky':   [
-        "And it's more of the same. Shocking.",
-        "Looks like the rest of the day is going to be equally delightful. Or not.",
-        "And the rest of the day? Same story. Prepare accordingly.",
+        "And it's more of the same tomorrow. Shocking.",
+        "Looks like tomorrow is going to be equally delightful. Or not.",
+        "And the rest of today and tomorrow? Same story. Prepare accordingly.",
     ],
     'bubbly':   [
-        "And looks like it will be like this for the rest of the day!",
-        "The rest of the day should be the same — consistency at its finest!",
-        "More of the same today! At least it's predictable!",
+        "And looks like it will be like this tomorrow as well!",
+        "The tomorrow should be the same — consistency at its finest!",
+        "More of the same tomorrow also! At least it's predictable!",
     ],
 }
 WEATHER_SAME_AS_NOW['chaos'] = WEATHER_SAME_AS_NOW['cheeky'] + WEATHER_SAME_AS_NOW['bubbly']
@@ -386,9 +386,9 @@ WEATHER_CONDITIONS = {
             ("Blue skies. I find it more alarming than reassuring, personally.", "Enjoy it while it lasts."),
         ],
         'clouds': [
-            ("Grey grim clouds. Another one of those days.", "Be positive though, days like these can be cozy too."),
-            ("Cloudy. Come out, Sun. We know you're in there.", "Every cloud has a silver lining, allegedly."),
-            ("Overcast skies in {city}. Shocking. Truly unprecedented.", "You'll be fine. Probably."),
+            ("Clouds. Lots of them. In fact, all of them.", "The sky has really committed to the bit today."),
+            ("Overcast in {city}. The sun has filed for remote work.", "Can't blame it, honestly."),
+            ("The clouds are back. Did they ever leave? Unclear.", "Meteorology is more of an art than a science."),
         ],
         'hail': [
             ("Hail. Because the weather gods apparently hate you specifically, {owner}.", "Watch your head. Seriously."),
@@ -429,8 +429,9 @@ WEATHER_CONDITIONS = {
             ("Loving life with these clear skies!", "Absence of clouds makes me so happy, {owner}!"),
         ],
         'clouds': [
-            ("A cloudy day, but that's totally okay! Silver linings everywhere!", "Be positive, {owner}! Every cloud has one!"),
-            ("Overcast today! Perfect weather to get things done or stay cosy!", "It's going to be a great day anyway, {owner}!"),
+            ("Cloudy skies today, {owner}, but clouds are just the sky being dramatic!", "The sun's still up there rooting for you!"),
+            ("Overcast in {city} — perfect excuse for candles and a cuppa tea!", "Make it cosy, {owner}!"),
+            ("Grey skies? More like a soft-launch for sunshine, {owner}!", "Every cloud is just a plot twist on the way to a lovely day!"),
         ],
         'hail': [
             ("Ooh, hail! A bit wild but kind of exciting!", "Watch your head out there, {owner}!"),
